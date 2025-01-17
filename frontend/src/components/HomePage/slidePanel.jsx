@@ -40,7 +40,7 @@ const SidePanel = () => {
       <div
         className={`fixed inset-y-0 left-0 transform ${
           isPanelOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out box-border md:relative md:translate-x-0 w-64 md:w-1/4 lg:w-1/5 bg-white rounded-sm  border-r-4 border-gray-400shadow-100 p-4 h-full overflow-y-auto z-50`}
+        } transition-transform duration-300 ease-in-out box-border rounded-r-lg md:relative md:translate-x-0 w-64 md:w-1/4 lg:w-1/5 bg-white rounded-sm  border-r-4 border-gray-400shadow-100 p-4 h-full overflow-y-auto z-50`}
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800"> </h2>
@@ -62,8 +62,8 @@ const SidePanel = () => {
           </button>
         </div>
         <ul className="space-y-2">
-          <li className="bg-white p-3 shadow-md">
-            <a href="#" className="text-gray-800 hover:text-blue-500 ">
+          <li className="  p-3  bg-blue-300  shadow-sm">
+            <a href="#" className="  text-sky-950 ">
               Home
             </a>
           </li>
@@ -74,7 +74,7 @@ const SidePanel = () => {
                 toggleSeoDropdown();
                 setActive(!isActive);
               }}
-              className={`text-gray-800 font-bold flex items-center justify-between ${
+              className={`text-gray-800 font-semibold flex items-center justify-between ${
                 isActive ? "text-blue-500" : ""
               }`}
             >

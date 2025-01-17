@@ -96,11 +96,12 @@ export const keyword = () => {
             >
               Search
             </button>
+          
           </div>
-          <hr className="my-4 h-[2px]" />
+          
           <div className="h-full">
             {keywordData && (
-              <div className="grid grid-cols-1 mt-4 bg-gray-100 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 mt-4 bg-white md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-lg shadow-md grid justify-center items-evenly">
                   <h2 className="text-lg md:text-xl font-semibold mb-2">
                     Volume
