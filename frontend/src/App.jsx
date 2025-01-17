@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import LoginForm from "./Pages/LoginForm";
-import SignupForm from "./Pages/SignupForm"; // Ensure correct case for import
+import SignupForm from "./Pages/signupForm";  
 import Navbar from "./components/Navbar/navbar";
 import SidePanel from "./components/HomePage/slidePanel"
 import Keyword from "./components/KeywordOverview/Keywords"

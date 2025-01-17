@@ -40,7 +40,7 @@ const SidePanel = () => {
       <div
         className={`fixed inset-y-0 left-0 transform ${
           isPanelOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out box-border md:relative md:translate-x-0 w-64 md:w-1/4 lg:w-1/5 bg-gray-200 rounded-sm  border-r-2 border-gray-400shadow-100 p-4 h-full overflow-y-auto z-50`}
+        } transition-transform duration-300 ease-in-out box-border md:relative md:translate-x-0 w-64 md:w-1/4 lg:w-1/5 bg-white rounded-sm  border-r-4 border-gray-400shadow-100 p-4 h-full overflow-y-auto z-50`}
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800"> </h2>

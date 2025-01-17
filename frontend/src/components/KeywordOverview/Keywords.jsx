@@ -80,7 +80,7 @@ export const keyword = () => {
   return (
     <Layout>
       <div className="container mx-auto p-2 md:pt-8 w-full h-full flex-grow">
-        <div className="p-4 md:p-8 min-h-full rounded-lg bg-gray-100 flex-col flex justify-center items-center">
+        <div className="p-4 md:p-8 min-h-full rounded-lg bg-white flex-col flex justify-center items-center">
           <h1 className="text-xl md:text-2xl font-bold mb-4">SEO Content</h1>
           <div className="mb-4">
             <input
