@@ -1,11 +1,11 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import LoginForm from "./Pages/LoginForm";
-import SignupForm from "./Pages/signupForm"; // Ensure correct case for import
+import SignupForm from "./Pages/signupForm";  
 import Navbar from "./components/Navbar/navbar";
 import SidePanel from "./components/HomePage/slidePanel";
 import Keyword from "./components/KeywordOverview/Keywords";
-import KeywordExp from "./components/NonLoginUser/keywordExp"; // Import the new component
+import KeywordExp from "./components/NonLoginUser/keywordExp";  
 
  
 const isLoggedIn = () => {

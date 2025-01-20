@@ -1,6 +1,6 @@
-import seoImage from "./../assets/planner.png";
-import seoImage2 from "./../assets/search volume.png";
-import seoImage3 from "./../assets/difficulty.png";
+import seoImage from "../assets/Planner.png";
+import seoImage2 from "../assets/search volume.png";
+import seoImage3 from "../assets/difficulty.png";
 import "@lottiefiles/lottie-player";
 
 const content = [
@@ -28,7 +28,8 @@ const content = [
       "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
       "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     ],
-    image: "https://www.inventive9.com/wp-content/uploads/2023/12/How-to-perform-Keyword-Research-.jpg",
+    image:
+      "https://www.inventive9.com/wp-content/uploads/2023/12/How-to-perform-Keyword-Research-.jpg",
     url: "https://somerandomurl.com",
   },
   {
