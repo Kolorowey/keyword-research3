@@ -81,20 +81,20 @@ export const keyword = () => {
     <Layout>
       <div className="container mx-auto p-2 md:pt-8 w-full h-full flex-grow">
         <div className="p-4 md:p-8 min-h-full rounded-lg bg-white flex-col flex justify-center items-center">
-          <h1 className="text-xl md:text-2xl font-bold mb-4">SEO Content</h1>
+          <h1 className="text-xl lg:text-6xl text-blue-400 md:text-2xl font-semibold mb-4">SEO Content</h1>
           <div className="mb-4">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search for a keyword..."
-              className="p-2 border border-gray-300 rounded"
+              className="p-2 border mt-8 rounded-md  border-sky-200  "
             />
             <button
               onClick={handleSearch}
-              className="ml-2 p-2 bg-blue-500 text-white rounded"
+              className="ml-2 p-2 bg-blue-500 shadow-md text-white rounded-md min-w-[3rem] hover:bg-blue-600"
             >
-              Search
+              <i className="fas fa-search"></i>
             </button>
           
           </div>

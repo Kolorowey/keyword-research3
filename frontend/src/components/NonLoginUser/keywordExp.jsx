@@ -1,23 +1,38 @@
 import React, { useState } from "react";
 import KeDesc from "./keDesc";
 import KeInfo from "./keInfo";
-import { IoSearchOutline } from "react-icons/io5";
-import "../keywordExplorer/keywordExp.css";
+
+import "./keywordExp.css";
 import GoogleAds from "../Googleads/AdsFirst";
+
+const countries = [
+  { code: "us", name: "United States" },
+  { code: "ca", name: "Canada" },
+  { code: "uk", name: "United Kingdom" },
+  { code: "au", name: "Australia" },
+  { code: "de", name: "Germany" },
+  { code: "fr", name: "France" },
+  { code: "in", name: "India" },
+  { code: "jp", name: "Japan" },
+  { code: "cn", name: "China" },
+  { code: "br", name: "Brazil" },
+];
 
 const keywordExp = () => {
   const [selectedTab, setSelectedTab] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const [keywordResults, setKeywordResults] = useState("");
 
   const handleFindKeyword = () => {
     if (keyword.trim() === "") return;
+    setKeywordResults(keyword);
     setShowPopup(true);
   };
 
   return (
-    <>
-      <div className="container mx-auto p-4 w-full h-screen bg-[#edf3e8] relative flex flex-col items-center">
+    <div>
+      <div className="container mx-auto  w-full h-screen bg-[#edf3e8] relative flex flex-col items-center min-w-[320px]">
         <div className="mt-32">
           <h1 className="text-center text-5xl md:text-4xl font-bold text-gray-700">
             Free Keyword Generator
@@ -25,58 +40,74 @@ const keywordExp = () => {
           <h4 className="text-center text-gray-500 mt-4">
             Find thousands of keywords here
           </h4>{" "}
-          
           <div className="flex text-gray-700 text-2xl flex-wrap justify-center my-6 leading-[3rem]">
             {["Google", "Bing", "Yahoo", "YouTube"].map((tab) => (
               <h1
                 key={tab}
                 onClick={() => setSelectedTab(tab)}
                 className={`cursor-pointer ${
-                  selectedTab === tab ? "text-[#5cacd4]" : "text-gray-500"
+                  selectedTab === tab
+                    ? "text-[#64b100] font-bold transition-all"
+                    : "text-gray-500 "
                 } mx-2`}
               >
                 {tab}
               </h1>
             ))}
           </div>
-          <div className="flex flex-col sm:flex-row justify-center items-center my-4 w-full ">
-            <input
-              type="text"
-              placeholder="Enter your keyword"
-              className="bg-slate-100 p-2 border-1 lg:w-[100%] border-orange-500 h-12 w-full sm:w-1/2 rounded-l"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-            <select className="w-full sm:w-1/3 lg:w-40 p-2 bg-slate-100 border-1 border-slate-400 h-12 rounded-r lg:border-l-2 sm:border-1-2 ">
-              <option value="">Select Country</option>
-              <option value="us">United States</option>
-              <option value="ca">Canada</option>
-              <option value="uk">United Kingdom</option>
-              <option value="au">Australia</option>
-              <option value="de">Germany</option>
-              <option value="fr">France</option>
-              <option value="in">India</option>
-              <option value="jp">Japan</option>
-              <option value="cn">China</option>
-              <option value="br">Brazil</option>
-            </select>
-            <span className="bg"></span>
-          <span className="bg2"></span>
-            <button
-              className="w-12 h-12 mx-1 p-3 bg-[#5cacd4] rounded-md border-none text-white border-2 flex items-center justify-center hover:bg-[#2671b8]"
-              onClick={handleFindKeyword}
-            >
-              <IoSearchOutline className="text-2xl" />
-            </button>
+          <div>
+            <div className="  flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div>
+                    <input
+                      type="text"
+                      className="w-96 p-3 border-2 border-[#abd37c] rounded-md focus:outline-none"
+                      placeholder="Enter your keyword"
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                    />
+                    <button
+                      className="bg-[#abd37c] p-3 rounded-r-md ml-[-40px] "
+                      onClick={handleFindKeyword}
+                    >
+                      <i className="fa-solid fa-magnifying-glass text-white"></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="flex space-x-4 items-center justify-center">
+                  <select className="p-3 border-1 border-[#9cb78b]   rounded-lg focus:outline-none h-[3.4rem] text-[#abd37c]">
+                    <option className="flex justify-center items-center">
+                      Select Country
+                    </option>
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.code.toUpperCase()} - {country.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select className="p-3 border-1 border-[#9cb78b]   rounded-lg focus:outline-none h-[3.4rem] text-[#abd37c]">
+                    <option>Select Language</option>
+                    {/* Add language options here */}
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
           {showPopup && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white p-4 rounded shadow-lg">
-                <h2 className="text-lg font-bold">Keyword Results</h2>
-                <p>Your keyword results will be displayed here.</p>
+                <h2 className="text-lg font-bold text-[#8193a6]">
+                  Keyword Results
+                </h2>
+                <p>
+                  Your keyword results for "{keywordResults}" will be displayed
+                  here.
+                </p>
                 <button
                   onClick={() => setShowPopup(false)}
-                  className="mt-4 p-2 bg-slate-900 text-white rounded"
+                  className="mt-4 p-2 bg-[#0074b1] text-white rounded-md"
                 >
                   Close
                 </button>
@@ -84,11 +115,11 @@ const keywordExp = () => {
             </div>
           )}
         </div>
-        <GoogleAds />
-      </div>
-      <KeInfo />
+      </div>{" "}
+      <GoogleAds />
+      <KeInfo className="mt-[44rem]" />
       <KeDesc />
-    </>
+    </div>
   );
 };
 export default keywordExp;
