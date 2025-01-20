@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,16 +61,17 @@ const Navbar = () => {
             )}
           </div>
           <ul
-            className={`md:px-2 ml-auto md:flex md:space-x-2 absolute md:relative top-full left-0 right-0 ${isOpen ? "block bg-white" : "hidden"
-              }`}
+            className={`md:px-2 ml-auto md:flex md:space-x-2 absolute md:relative top-full left-0 right-0 ${
+              isOpen ? "block bg-white" : "hidden"
+            }`}
           >
             <li>
-              <a
-                href="#"
+              <Link
+                to="/"
                 className="flex md:inline-flex p-4 items-center hover:bg-gray-50"
               >
                 <span>Home</span>
-              </a>
+              </Link>
             </li>
             <li className="relative parent">
               <a
@@ -87,8 +89,9 @@ const Navbar = () => {
                 </svg>
               </a>
               <ul
-                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${dropdownOpen ? "block" : "hidden"
-                  }`}
+                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${
+                  dropdownOpen ? "block" : "hidden"
+                }`}
               >
                 <li className="block">
                   <a href="#" className="flex px-4 py-3 hover:bg-gray-50">
@@ -152,8 +155,9 @@ const Navbar = () => {
                 </svg>
               </a>
               <ul
-                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${serviceDropdownOpen ? "block" : "hidden"
-                  }`}
+                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${
+                  serviceDropdownOpen ? "block" : "hidden"
+                }`}
               >
                 <li>
                   <a href="#" className="flex px-4 py-3 hover:bg-gray-50">
@@ -191,8 +195,9 @@ const Navbar = () => {
                 </svg>
               </a>
               <ul
-                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${resourcesDropdownOpen ? "block" : "hidden"
-                  }`}
+                className={`child transition duration-300 md:absolute top-full right-0 md:w-48 bg-white md:shadow-lg md:rounded-b ${
+                  resourcesDropdownOpen ? "block" : "hidden"
+                }`}
               >
                 <li>
                   <a href="#" className="flex px-4 py-3 hover:bg-gray-50">
@@ -224,20 +229,22 @@ const Navbar = () => {
               {!isLoggedIn && (
                 <>
                   <div className="text-white px-4 py-2">
-                    <button className="bg-gray-500 p-2 rounded-lg">
-                      Log in
-                    </button>
+                    <Link to="/login">
+                      <button className="bg-gray-500 p-2 rounded-lg">
+                        Log in
+                      </button>
+                    </Link>
                   </div>
                   <div className="text-white px-4 py-2">
-                    <button className="bg-green-300 p-2 rounded-lg">
+                    <Link to="signup"><button className="bg-green-300 p-2 rounded-lg">
                       Sign up
-                    </button>
+                    </button></Link>
+                    
                   </div>
                 </>
               )}
             </div>
           </ul>
-
 
           {/* <div className="ml-auto flex items-center space-x-4">
             <div className="relative parent">

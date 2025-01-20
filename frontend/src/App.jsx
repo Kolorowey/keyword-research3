@@ -7,7 +7,6 @@ import SidePanel from "./components/HomePage/slidePanel";
 import Keyword from "./components/KeywordOverview/Keywords";
 import KeywordExp from "./components/NonLoginUser/keywordExp";  
 
- 
 const isLoggedIn = () => {
   return localStorage.getItem("userToken") !== null;
 };
@@ -16,28 +15,21 @@ const PrivateRoute = ({ element }) => {
   return isLoggedIn() ? element : <Navigate to="/login" />;
 };
 
-const PublicRoute = ({ element }) => {
-  return !isLoggedIn() ? element : <Navigate to="/keyword" />;
-};
-
 const AppContent = () => {
   const location = useLocation();
   const showSidePanel = !["/", "/login", "/signup"].includes(location.pathname);
 
+  console.log("Current location:", location.pathname);
+
   return (
     <div className="app flex h-screen">
       {showSidePanel && <SidePanel />}
-
-      
-      <div className={`content-container flex-grow   `}>
+      <div className={`content-container flex-grow`}>
         <Routes>
-          {/* <Route path="/" element={isLoggedIn() ? <Navigate to="/keyword" /> : <Navigate to="/keywordExp" />} /> */}
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
-          {/* <Route path="/keyword" element={<Keyword />} /> */}
           <Route path="/keyword" element={<PrivateRoute element={<Keyword />} />} /> 
           <Route path="/" element={<KeywordExp />} />  
-         
         </Routes>
       </div>
     </div>
@@ -46,8 +38,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    
-    <Router>
+    <Router basename="/" >
       <Navbar />
       <AppContent />
     </Router>

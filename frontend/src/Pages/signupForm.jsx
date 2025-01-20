@@ -21,7 +21,6 @@ function SignupForm() {
           background="##FFFFFF"
           speed="0.5"
           style={{ width: "300px", height: "300px" }}
-          
           nocontrols
           autoplay
           direction="1"
