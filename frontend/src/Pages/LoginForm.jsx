@@ -47,9 +47,9 @@ function LoginForm() {
                         />
                         Remember me
                     </label>
-                    <a href="#" className="text-blue-500 hover:underline">
+                    <Link to="/forgot-password" className="text-blue-500 hover:underline">
                         Forgot?
-                    </a>
+                    </Link>
                 </div>
                 <button
                     type="submit"
@@ -64,7 +64,7 @@ function LoginForm() {
                     </Link>
                 </div>
             </form>
-            <div className="  justify-center mt-8 hidden md:block animate-fadeIn">
+            <div className="justify-center mt-8 hidden md:block animate-fadeIn">
                 <lottie-player
                     src="https://lottie.host/3bc376b5-f198-4081-83a5-a5c5b98f9b74/FrytdcOrLQ.json"
                     background="##FFFFFF"

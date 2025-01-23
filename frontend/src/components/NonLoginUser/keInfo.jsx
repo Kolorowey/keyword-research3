@@ -12,7 +12,7 @@ const KeInfo = () => {
   return (
     <>
       <div>
-        <div className="w-full bg-[#fdfaf5] text-2xl md:text-4xl font-bold p-24 text-black iteam-center leading-[3rem] md:leading-[4rem] bg-cover h-[28rem] text-center">
+        <div className="w-full bg-[#e8e7e7] text-2xl md:text-4xl font-bold p-24 text-black iteam-center leading-[3rem] md:leading-[4rem] bg-cover h-[28rem] text-center">
           <h1 className="text-center ">
             Enhance Your Content
             <br className="block md:hidden" /> with Effective SEO Tools
@@ -21,7 +21,7 @@ const KeInfo = () => {
             Lorem ipsum dolor sit amet consectetur adipisicing elit.
           </p>
         </div>
-
+{/* 
         <div className={`w-3/4 mx-auto flex flex-wrap justify-center `}>
           <div
             className={`container w-full mt-6 sm:w-full mx-auto shadow-xl rounded-t-lg grid flex-wrap justify-center bg-[#ffffff] gap-x-20 relative bottom-44  `}
@@ -111,7 +111,7 @@ const KeInfo = () => {
             </a>
             
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );
