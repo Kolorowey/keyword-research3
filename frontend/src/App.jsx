@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar/navbar";
 import SidePanel from "./components/HomePage/slidePanel";
 import Keyword from "./components/KeywordOverview/Keywords";
 import KeywordExp from "./components/NonLoginUser/keywordExp";  
+ 
 
 const isLoggedIn = () => {
   return localStorage.getItem("userToken") !== null;
@@ -28,8 +29,9 @@ const AppContent = () => {
         <Routes>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
-          <Route path="/keyword" element={<PrivateRoute element={<Keyword />} />} /> 
+          {/* <Route path="/keyword" element={<PrivateRoute element={<Keyword />} />} />  */}
           <Route path="/" element={<KeywordExp />} />  
+          <Route path="/keyword" element={<Keyword />} />  
         </Routes>
       </div>
     </div>
@@ -39,8 +41,9 @@ const AppContent = () => {
 function App() {
   return (
     <Router basename="/" >
-      <Navbar />
+      <Navbar /> 
       <AppContent />
+      
     </Router>
   );
 }

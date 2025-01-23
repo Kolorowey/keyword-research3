@@ -9,6 +9,7 @@ import icon5 from '../../assets/img5.png';
 import icon6 from '../../assets/img6.png';
 import icon7 from '../../assets/img7.png';
 import icon8 from '../../assets/img8.png';
+import Footer from "../Footer/Footer";
  
 
 import "./keywordExp.css";
@@ -65,6 +66,9 @@ const iconPositions = [
 ];
 
 const keywordExp = () => {
+
+
+  
   const [selectedTab, setSelectedTab] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -180,6 +184,7 @@ const keywordExp = () => {
       <GoogleAds />
       <KeInfo className="mt-[44rem]" />
       <KeDesc />
+      <Footer/>
     </div>
   );
 };
