@@ -7,6 +7,9 @@ const authRoutes = require('./src/routes/authRoutes');
 const keywordRoutes = require('./src/routes/keywordRoutes'); 
 const scraperRoutes = require('./src/routes/scraperRoutes'); 
 
+app.use(cors());
+
+
 // Load Environment Variables
 dotenv.config();
 
@@ -17,7 +20,12 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'https://keyword-research3-2.onrender.com' })); // Allow requests from your React app
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://keyword-research3-2.onrender.com'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }));
+  
 app.use(bodyParser.json());
 
 // Routes
