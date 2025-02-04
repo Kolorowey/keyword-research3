@@ -17,8 +17,11 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
-
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://keyword-research3-2.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
 // Routes
