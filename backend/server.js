@@ -17,7 +17,7 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' })); // Allow requests from your React app
+app.use(cors({ origin: 'https://keyword-research3-2.onrender.com' })); // Allow requests from your React app
 app.use(bodyParser.json());
 
 // Routes
