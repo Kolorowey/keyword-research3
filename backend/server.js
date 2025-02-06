@@ -6,8 +6,9 @@ const connectDB = require('./src/config/dbConfig');
 const authRoutes = require('./src/routes/authRoutes');
 const keywordRoutes = require('./src/routes/keywordRoutes');
 const scraperRoutes = require('./src/routes/scraperRoutes');
+const geminiSpamCheckerRoutes = require('./src/routes/gemini_spam_checker'); // Import the gemini_spam_checker route
 
-// Load Environment Variables
+// Load environment variables
 dotenv.config();
 
 // Connect to MongoDB
@@ -28,9 +29,10 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/keywords', keywordRoutes);
 app.use('/api/scraper', scraperRoutes);
+app.use('/api/gemini', geminiSpamCheckerRoutes); // Add this route
 
-// Start Server
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
