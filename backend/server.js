@@ -6,7 +6,7 @@ const connectDB = require('./src/config/dbConfig');
 const authRoutes = require('./src/routes/authRoutes');
 const keywordRoutes = require('./src/routes/keywordRoutes');
 const scraperRoutes = require('./src/routes/scraperRoutes');
-const geminiSpamCheckerRoutes = require('./src/routes/gemini_spam_checker'); // Import the gemini_spam_checker route
+const geminiSpamCheckerRoutes = require('./src/routes/gemini_api_tool'); // Import the gemini_spam_checker route
 
 // Load environment variables
 dotenv.config();
