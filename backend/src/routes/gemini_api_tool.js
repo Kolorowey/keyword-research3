@@ -12,6 +12,115 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 
+// Function to fetch Keyword Volume, Difficulty, Spam Risk, and Search Intent
+const getKeywordDetails = async (keyword) => {
+  try {
+    // Prepare the prompt to ask for Keyword Volume, Difficulty, Spam Risk, and Search Intent
+    const prompt = `For the keyword "${keyword}", provide the following information:
+      - Keyword Volume (set to a sample value like 5000 to 50k)
+      - Keyword Difficulty (set to a sample percentage)
+      - Spam Risk Score (a percentage from 0 to 100)
+      - Search Intent (one of the following: informational, commercial)
+
+      only this 4 information is required
+
+    Please return this information as a JSON object.`;
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
+
+    let generatedText = null;
+
+    if (
+      result &&
+      result.response &&
+      result.response.candidates &&
+      result.response.candidates.length > 0
+    ) {
+      for (const candidate of result.response.candidates) {
+        if (
+          candidate &&
+          candidate.content &&
+          candidate.content.parts &&
+          candidate.content.parts.length > 0
+        ) {
+          for (const part of candidate.content.parts) {
+            if (part && part.text) {
+              generatedText = part.text; // Take the first text part we find
+              break;
+            }
+          }
+        }
+
+        if (generatedText) break;
+      }
+    }
+
+    if (generatedText) {
+      // Clean the generated text to remove markdown (code block formatting)
+      const cleanedText = generatedText.replace(/```json\n|\n```/g, '').trim();
+
+      // Parse the cleaned JSON string
+      try {
+        const parsedResult = JSON.parse(cleanedText);
+
+        if (parsedResult["Keyword Difficulty"]) {
+          // Convert Keyword Difficulty to percentage
+          parsedResult["Keyword Difficulty"] = 
+            (parsedResult["Keyword Difficulty"] * 100).toFixed(2) + "%";
+        }
+
+        // Generate Spam Risk Score (for now, just a random score between 0-100)
+        const spamRiskScore = Math.random() * 100;
+        parsedResult["spamRiskScore"] = spamRiskScore.toFixed(2); // Set it with two decimal places
+
+        // Generate Search Intent (for now, randomly choose between informational/commercial)
+        const intents = ["informational", "commercial"];
+        parsedResult["searchIntent"] = intents[Math.floor(Math.random() * intents.length)];
+
+        // Remove the old redundant keys
+        delete parsedResult["Spam Risk Score"];
+        delete parsedResult["Search Intent"];
+
+        return parsedResult; // Return the modified JSON data
+      } catch (error) {
+        console.error("Error parsing cleaned JSON:", error);
+        throw new Error("Failed to parse cleaned JSON response");
+      }
+    } else {
+      console.error("Unexpected response structure:", JSON.stringify(result, null, 2));
+      return "Unexpected response structure";
+    }
+  } catch (error) {
+    console.error("Error generating content:", error);
+    throw new Error("Failed to fetch keyword details");
+  }
+};
+
+
+// Endpoint for fetching Keyword Volume, Difficulty, Spam Risk, and Search Intent
+router.post("/get-keyword-details", async (req, res) => {
+  const { keyword } = req.body; // Expecting a single keyword
+
+  if (!keyword) {
+    return res.status(400).json({ error: "Keyword is required" });
+  }
+
+  try {
+    const analysisResult = await getKeywordDetails(keyword);
+
+    res.json({ analysisResult }); // Send the result back to the client
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // Function to fetch Keyword Volume and Difficulty for a single keyword
 const getKeywordVolumeAndDifficulty = async (keyword) => {
   try {
