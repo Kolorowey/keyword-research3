@@ -29,7 +29,14 @@ async function getKeywordVolume(keyword, location_code, language_code) {
             }
         });
 
-        return response.data.tasks[0]?.result[0]?.search_volume || 'Unknown';
+        // Check if the response contains the expected structure
+        const task = response.data?.tasks?.[0];
+        if (task && task.result && task.result[0]) {
+            return task.result[0].search_volume || 'Unknown';
+        } else {
+            console.error(`Unexpected response structure for keyword ${keyword}:`, response.data);
+            return 'Unknown';
+        }
     } catch (error) {
         console.error(`Error fetching volume for ${keyword}:`, error.response?.data || error.message);
         return 'Unknown';
@@ -51,11 +58,9 @@ async function getKeywordDifficulty(keyword, location_code, language_code) {
         const response = await axios.post(url, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Basic ${apiKey}` // ✅ Fixed Authorization header
+                Authorization: `Basic ${apiKey}` 
             }
         });
-
-        
 
         return response.data.tasks?.[0]?.result?.[0]?.items?.[0]?.keyword_difficulty || "Unknown";
     } catch (error) {
@@ -65,6 +70,26 @@ async function getKeywordDifficulty(keyword, location_code, language_code) {
 }
 
 
+// Route: Get keyword volume
+router.get('/keyword-volume', async (req, res) => {
+    const { keyword, location_code = 2840, language_code = 'en' } = req.query;
+
+    if (!keyword) {
+        return res.status(400).json({ message: 'Keyword is required' });
+    }
+
+    try {
+        const searchVolume = await getKeywordVolume(keyword, location_code, language_code);
+
+        res.status(200).json({
+            keyword,
+            searchVolume
+        });
+    } catch (error) {
+        console.error('Error fetching keyword volume:', error.message);
+        res.status(500).json({ message: 'Failed to fetch keyword volume', error: error.message });
+    }
+});
 
 // Route: Get keyword volume & difficulty
 router.get('/', async (req, res) => {
