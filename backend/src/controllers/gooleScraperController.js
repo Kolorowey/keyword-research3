@@ -48,7 +48,7 @@ const scrapeKeywords = async (req, res) => {
                     queue.push(suggestion);
                 }
 
-                if (collectedKeywords.size >= 200) break;
+                if (collectedKeywords.size >= 100) break;
             }
         }
 
