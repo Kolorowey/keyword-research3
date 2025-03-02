@@ -1,8 +1,8 @@
 const express = require("express");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const dotenv = require("dotenv");
-const axios = require('axios');
-const cheerio = require('cheerio');
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 dotenv.config();
 
@@ -10,7 +10,6 @@ const router = express.Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 
 // Function to fetch Keyword Volume, Difficulty, Spam Risk, and Search Intent
 const getKeywordDetails = async (keyword) => {
@@ -63,7 +62,7 @@ const getKeywordDetails = async (keyword) => {
 
     if (generatedText) {
       // Clean the generated text to remove markdown (code block formatting)
-      const cleanedText = generatedText.replace(/```json\n|\n```/g, '').trim();
+      const cleanedText = generatedText.replace(/```json\n|\n```/g, "").trim();
 
       // Parse the cleaned JSON string
       try {
@@ -71,7 +70,7 @@ const getKeywordDetails = async (keyword) => {
 
         if (parsedResult["Keyword Difficulty"]) {
           // Convert Keyword Difficulty to percentage
-          parsedResult["Keyword Difficulty"] = 
+          parsedResult["Keyword Difficulty"] =
             (parsedResult["Keyword Difficulty"] * 100).toFixed(2) + "%";
         }
 
@@ -81,7 +80,8 @@ const getKeywordDetails = async (keyword) => {
 
         // Generate Search Intent (for now, randomly choose between informational/commercial)
         const intents = ["informational", "commercial"];
-        parsedResult["searchIntent"] = intents[Math.floor(Math.random() * intents.length)];
+        parsedResult["searchIntent"] =
+          intents[Math.floor(Math.random() * intents.length)];
 
         // Remove the old redundant keys
         delete parsedResult["Spam Risk Score"];
@@ -93,7 +93,10 @@ const getKeywordDetails = async (keyword) => {
         throw new Error("Failed to parse cleaned JSON response");
       }
     } else {
-      console.error("Unexpected response structure:", JSON.stringify(result, null, 2));
+      console.error(
+        "Unexpected response structure:",
+        JSON.stringify(result, null, 2)
+      );
       return "Unexpected response structure";
     }
   } catch (error) {
@@ -101,7 +104,6 @@ const getKeywordDetails = async (keyword) => {
     throw new Error("Failed to fetch keyword details");
   }
 };
-
 
 // Endpoint for fetching Keyword Volume, Difficulty, Spam Risk, and Search Intent
 router.post("/get-keyword-details", async (req, res) => {
@@ -120,12 +122,11 @@ router.post("/get-keyword-details", async (req, res) => {
   }
 });
 
-
 // Function to fetch Keyword Volume and Difficulty for a single keyword
-const getKeywordVolumeAndDifficulty = async (keyword) => {
+const getKeywordDifficulty = async (keyword) => {
   try {
     // Prepare the prompt to ask for Keyword Volume and Keyword Difficulty for a single keyword
-    const prompt = `I understand that you cannot access real-time data. I just need demo data for testing. For the following keyword, please provide a JSON object containing the Keyword Volume (set to a sample value, e.g., 5000 to 50k) and Keyword Difficulty (set to a sample percentage based on difficulty of that keyword).\n\nKeyword: ${keyword}`;
+    const prompt = `I understand that you cannot access real-time data. I just need demo data for testing. For the following keyword, please provide a JSON object containing  Keyword Difficulty("keyword_difficulty" in json) (set to a sample percentage based on difficulty of that keyword) and a 10 words line with description of difficulty of keyword (ex-this is the hardest keyword and has a lot of competition.(difficulty_description in json)).\n\nKeyword: ${keyword}`;
 
     const result = await model.generateContent({
       contents: [
@@ -166,7 +167,7 @@ const getKeywordVolumeAndDifficulty = async (keyword) => {
 
     if (generatedText) {
       // Clean the generated text to remove markdown (code block formatting)
-      const cleanedText = generatedText.replace(/```json\n|\n```/g, '').trim();
+      const cleanedText = generatedText.replace(/```json\n|\n```/g, "").trim();
 
       // Parse the cleaned JSON string
       try {
@@ -174,7 +175,7 @@ const getKeywordVolumeAndDifficulty = async (keyword) => {
 
         if (parsedResult["Keyword Difficulty"]) {
           // Convert Keyword Difficulty to percentage
-          parsedResult["Keyword Difficulty"] = 
+          parsedResult["Keyword Difficulty"] =
             (parsedResult["Keyword Difficulty"] * 100).toFixed(2) + "%";
         }
 
@@ -184,7 +185,10 @@ const getKeywordVolumeAndDifficulty = async (keyword) => {
         throw new Error("Failed to parse cleaned JSON response");
       }
     } else {
-      console.error("Unexpected response structure:", JSON.stringify(result, null, 2));
+      console.error(
+        "Unexpected response structure:",
+        JSON.stringify(result, null, 2)
+      );
       return "Unexpected response structure";
     }
   } catch (error) {
@@ -194,7 +198,7 @@ const getKeywordVolumeAndDifficulty = async (keyword) => {
 };
 
 // Endpoint for fetching Keyword Volume and Difficulty for a single keyword
-router.post("/get-keyword-volume-difficulty", async (req, res) => {
+router.post("/get-keyword-difficulty", async (req, res) => {
   const { keyword } = req.body; // Expecting a single keyword
 
   if (!keyword) {
@@ -202,7 +206,7 @@ router.post("/get-keyword-volume-difficulty", async (req, res) => {
   }
 
   try {
-    const analysisResult = await getKeywordVolumeAndDifficulty(keyword);
+    const analysisResult = await getKeywordDifficulty(keyword);
 
     res.json({ analysisResult }); // Send the result back to the client
   } catch (error) {
@@ -210,9 +214,11 @@ router.post("/get-keyword-volume-difficulty", async (req, res) => {
   }
 });
 
-const getSpammyKeywordsAndScore = async (blogText) => {
+// Function to fetch Spam Score for a single keyword
+const getKeywordSpamScore = async (keyword) => {
   try {
-    const prompt = `Analyze the following blog text and return the spammy keywords and spam score:\n\n${blogText}`;
+    // Prepare the prompt to ask for Spam Score of a keyword
+    const prompt = `I understand that you cannot access real-time data. I just need demo data for testing. For the following keyword, please provide a JSON object containing Spam Score from scale of 1 - 10("spam_score" in json) (set to a sample marks on scale 1- 10 based on how spammy the keyword is not percentage) and a 10-word description of the spam level of the keyword (ex- this keyword is highly spammy and overused. ("spam_description" in json)).\n\nKeyword: ${keyword}`;
 
     const result = await model.generateContent({
       contents: [
@@ -221,13 +227,6 @@ const getSpammyKeywordsAndScore = async (blogText) => {
         },
       ],
     });
-
-    console.log(
-      "Full response from Gemini API:",
-      JSON.stringify(result, null, 2)
-    ); // Improved logging
-
-    // **Robustly access the text:**
 
     let generatedText = null;
 
@@ -238,8 +237,6 @@ const getSpammyKeywordsAndScore = async (blogText) => {
       result.response.candidates.length > 0
     ) {
       for (const candidate of result.response.candidates) {
-        // Iterate through candidates (important!)
-
         if (
           candidate &&
           candidate.content &&
@@ -248,310 +245,58 @@ const getSpammyKeywordsAndScore = async (blogText) => {
         ) {
           for (const part of candidate.content.parts) {
             if (part && part.text) {
-              generatedText = part.text; // Take the first text part we find
-
-              break; // Exit inner loop once text is found
-            }
-          }
-        }
-
-        if (generatedText) break; // Exit outer loop if text is found
-      }
-    }
-
-    if (generatedText) {
-      return generatedText;
-    } else {
-      console.error(
-        "Unexpected response structure:",
-        JSON.stringify(result, null, 2)
-      ); // Log the full response for debugging
-
-      return "Unexpected response structure"; // Or throw an error
-    }
-  } catch (error) {
-    console.error("Error generating content:", error);
-
-    throw new Error("Failed to analyze the blog text");
-  }
-};
-
-router.post("/analyze-blog", async (req, res) => {
-  const { blogText } = req.body;
-
-  if (!blogText) {
-    return res.status(400).json({ error: "Blog text is required" });
-  }
-
-  try {
-    const analysisResult = await getSpammyKeywordsAndScore(blogText);
-
-    res.json({ analysisResult }); // Send the result back to the client
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const optimizeContent = async (content) => {
-  try {
-    const prompt = `Optimize the following content for clarity, readability, and SEO. Add relevant keywords where appropriate and remove any spammy or low-quality keywords.  Return the optimized content:\n\n${content}`;
-
-    const result = await model.generateContent({
-      contents: [
-        {
-          parts: [{ text: prompt }],
-        },
-      ],
-    });
-
-    console.log(
-      "Full response from Gemini API (Optimization):",
-      JSON.stringify(result, null, 2)
-    );
-
-    let optimizedContent = null;
-
-    if (
-      result &&
-      result.response &&
-      result.response.candidates &&
-      result.response.candidates.length > 0
-    ) {
-      for (const candidate of result.response.candidates) {
-        if (
-          candidate &&
-          candidate.content &&
-          candidate.content.parts &&
-          candidate.content.parts.length > 0
-        ) {
-          for (const part of candidate.content.parts) {
-            if (part && part.text) {
-              optimizedContent = part.text;
+              generatedText = part.text;
               break;
             }
           }
         }
-        if (optimizedContent) break;
+        if (generatedText) break;
       }
     }
 
-    if (optimizedContent) {
-      return optimizedContent;
+    if (generatedText) {
+      const cleanedText = generatedText.replace(/```json\n|\n```/g, "").trim();
+
+      try {
+        const parsedResult = JSON.parse(cleanedText);
+
+        if (parsedResult["spam_score"]) {
+          parsedResult["spam_score"] =
+            (parsedResult["spam_score"] * 100).toFixed(2) + "%";
+        }
+
+        return parsedResult;
+      } catch (error) {
+        console.error("Error parsing cleaned JSON:", error);
+        throw new Error("Failed to parse cleaned JSON response");
+      }
     } else {
       console.error(
-        "Unexpected response structure (Optimization):",
+        "Unexpected response structure:",
         JSON.stringify(result, null, 2)
       );
       return "Unexpected response structure";
     }
   } catch (error) {
-    console.error("Error optimizing content:", error);
-    throw new Error("Failed to optimize content");
+    console.error("Error generating content:", error);
+    throw new Error("Failed to fetch spam score");
   }
 };
 
-router.post("/optimize", async (req, res) => {
-  const { content } = req.body;
+// Endpoint for fetching Spam Score for a single keyword
+router.post("/get-keyword-spam-score", async (req, res) => {
+  const { keyword } = req.body;
 
-  if (!content) {
-    return res.status(400).json({ error: "Content is required" });
+  if (!keyword) {
+    return res.status(400).json({ error: "Keyword is required" });
   }
 
   try {
-    const optimizedContent = await optimizeContent(content);
-    res.json({ optimizedContent });
+    const analysisResult = await getKeywordSpamScore(keyword);
+    res.json({ analysisResult });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-
-const getSEOSuggestions = async (text) => {
-  try {
-      const prompt = `Provide SEO suggestions for the following blog text, including:
-* **Keyword Suggestions:**  Suggest relevant keywords that could be added to improve search engine ranking.
-* **Title Optimization:** Suggest improvements to the title to make it more compelling and SEO-friendly.
-* **Meta Description Suggestions:** Suggest a compelling meta description that accurately summarizes the content and encourages clicks from search results.
-* **Content Structure Suggestions:**  Suggest improvements to the content structure, such as headings, subheadings, and formatting, to make it more readable and SEO-friendly.
-* **Link Building Opportunities:**  Suggest potential link-building opportunities, such as relevant websites or resources that could be linked to.
-
-Blog Text:\n\n${text}`;
-
-      const result = await model.generateContent({
-          contents: [{ parts: [{ text: prompt }] }],
-      });
-
-      console.log(
-          "Full response from Gemini API (SEO Suggestions):",
-          JSON.stringify(result, null, 2)
-      );
-
-      let seoSuggestions = null;
-
-      if (
-          result &&
-          result.response &&
-          result.response.candidates &&
-          result.response.candidates.length > 0
-      ) {
-          for (const candidate of result.response.candidates) {
-              if (
-                  candidate &&
-                  candidate.content &&
-                  candidate.content.parts &&
-                  candidate.content.parts.length > 0
-              ) {
-                  for (const part of candidate.content.parts) {
-                      if (part && part.text) {
-                          seoSuggestions = part.text;
-                          break;
-                      }
-                  }
-              }
-              if (seoSuggestions) break;
-          }
-      }
-
-      if (seoSuggestions) {
-          return seoSuggestions;
-      } else {
-          console.error(
-              "Unexpected response structure (SEO Suggestions):",
-              JSON.stringify(result, null, 2)
-          );
-          return "Unexpected response structure";
-      }
-  } catch (error) {
-      console.error("Error getting SEO suggestions:", error);
-      throw new Error("Failed to get SEO suggestions");
-  }
-};
-
-// Function to fetch blog content from a URL (optimized for text extraction)
-async function fetchBlogText(url) {
-  try {
-    const { data } = await axios.get(url);
-    const $ = cheerio.load(data);
-
-    // Example: Extract text from the main content (adjust the selector if necessary)
-    const mainContent = $('article').text().trim(); // Targeting the article tag for main content
-    
-    if (!mainContent) {
-      throw new Error('No main content found');
-    }
-
-    // Clean up the text by removing extra spaces, line breaks, and other unwanted characters
-    const cleanText = mainContent
-      .replace(/\s+/g, ' ')  // Replace multiple spaces, tabs, newlines with a single space
-      .replace(/^\s+|\s+$/g, '')  // Trim leading and trailing spaces
-      .replace(/\n/g, ' ')  // Replace line breaks with a space
-      .replace(/\r/g, '');  // Remove any carriage returns
-
-    return cleanText;
-  } catch (error) {
-    throw new Error('Error fetching blog text: ' + error.message);
-  }
-}
-
-// Route for SEO suggestions
-router.post("/seo-suggestions", async (req, res) => {
-  const { blogUrl } = req.body;
-
-  if (!blogUrl) {
-      return res.status(400).json({ error: "Blog URL is required" });
-  }
-
-  try {
-      // Fetch blog text from URL
-      const blogText = await fetchBlogText(blogUrl);
-
-      if (!blogText) {
-          return res.status(400).json({ error: "Failed to extract text from the blog" });
-      }
-
-      // Get SEO suggestions based on the extracted text
-      const suggestions = await getSEOSuggestions(blogText);
-
-      // Respond with SEO suggestions
-      res.json({ seoSuggestions: suggestions });
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
-});
-
-
-
-const generateBlogContent = async (prompt) => {
-  try {
-      const fullPrompt = `Write a blog post based on the following prompt, aiming for approximately 100 lines in length:\n\n${prompt}`;
-
-      const result = await model.generateContent({
-          contents: [{ parts: [{ text: fullPrompt }] }],
-      });
-
-      console.log(
-          "Full response from Gemini API (Blog Creation):",
-          JSON.stringify(result, null, 2)
-      );
-
-      let blogContent = null;
-
-      if (
-          result &&
-          result.response &&
-          result.response.candidates &&
-          result.response.candidates.length > 0
-      ) {
-          for (const candidate of result.response.candidates) {
-              if (
-                  candidate &&
-                  candidate.content &&
-                  candidate.content.parts &&
-                  candidate.content.parts.length > 0
-              ) {
-                  for (const part of candidate.content.parts) {
-                      if (part && part.text) {
-                          blogContent = part.text;
-                          break;
-                      }
-                  }
-              }
-              if (blogContent) break;
-          }
-      }
-
-      if (blogContent) {
-          return blogContent;
-      } else {
-          console.error(
-              "Unexpected response structure (Blog Creation):",
-              JSON.stringify(result, null, 2)
-          );
-          return "Unexpected response structure";
-      }
-  } catch (error) {
-      console.error("Error generating blog content:", error);
-      throw new Error("Failed to generate blog content");
-  }
-};
-
-router.post("/create-blog", async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required" });
-  }
-
-  try {
-      const blogContent = await generateBlogContent(prompt);
-      res.json({ blogContent });
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
-});
-
-
-
-
 
 module.exports = router;
