@@ -299,4 +299,92 @@ router.post("/get-keyword-spam-score", async (req, res) => {
   }
 });
 
+// Function to fetch Keyword Volume and Difficulty for a single keyword
+const getKeywordVolumeAndDifficulty = async (keyword) => {
+  try {
+    // Prepare the prompt to ask for Keyword Volume and Keyword Difficulty for a single keyword
+    const prompt = `I understand that you cannot access real-time data. I just need demo data for testing. For the following keyword, please provide a JSON object containing the Keyword Volume (set to a sample value, e.g., 5000 to 50k) and Keyword Difficulty (set to a sample percentage based on difficulty of that keyword).\n\nKeyword: ${keyword}`;
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
+
+    // console.log("Full response from Gemini API:", JSON.stringify(result, null, 2)); // Improved logging
+
+    let generatedText = null;
+
+    if (
+      result &&
+      result.response &&
+      result.response.candidates &&
+      result.response.candidates.length > 0
+    ) {
+      for (const candidate of result.response.candidates) {
+        if (
+          candidate &&
+          candidate.content &&
+          candidate.content.parts &&
+          candidate.content.parts.length > 0
+        ) {
+          for (const part of candidate.content.parts) {
+            if (part && part.text) {
+              generatedText = part.text; // Take the first text part we find
+              break;
+            }
+          }
+        }
+
+        if (generatedText) break;
+      }
+    }
+
+    if (generatedText) {
+      // Clean the generated text to remove markdown (code block formatting)
+      const cleanedText = generatedText.replace(/```json\n|\n```/g, '').trim();
+
+      // Parse the cleaned JSON string
+      try {
+        const parsedResult = JSON.parse(cleanedText);
+
+        if (parsedResult["Keyword Difficulty"]) {
+          // Convert Keyword Difficulty to percentage
+          parsedResult["Keyword Difficulty"] = 
+            (parsedResult["Keyword Difficulty"] * 100).toFixed(2) + "%";
+        }
+
+        return parsedResult; // Return the modified JSON data with percentage
+      } catch (error) {
+        console.error("Error parsing cleaned JSON:", error);
+        throw new Error("Failed to parse cleaned JSON response");
+      }
+    } else {
+      console.error("Unexpected response structure:", JSON.stringify(result, null, 2));
+      return "Unexpected response structure";
+    }
+  } catch (error) {
+    console.error("Error generating content:", error);
+    throw new Error("Failed to fetch keyword volume and difficulty");
+  }
+};
+
+router.post("/get-keyword-volume-difficulty", async (req, res) => {
+  const { keyword } = req.body; // Expecting a single keyword
+
+  if (!keyword) {
+    return res.status(400).json({ error: "Keyword is required" });
+  }
+
+  try {
+    const analysisResult = await getKeywordVolumeAndDifficulty(keyword);
+
+    res.json({ analysisResult }); // Send the result back to the client
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
