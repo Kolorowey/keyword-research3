@@ -5,7 +5,7 @@ require("dotenv").config();
 // Keywords Everywhere API Endpoint
 const KE_API_URL = "https://api.keywordseverywhere.com/v1/get_keyword_data";
 
-router.post("/keyword-data", async (req, res) => {
+router.post("/keyword-Everywhere-Volume", async (req, res) => {
   try {
     const fetch = (await import("node-fetch")).default; // Dynamic import
 
