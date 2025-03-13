@@ -6,30 +6,33 @@ const { protect, adminMiddleware } = require('../middlewares/authMiddleware');
 
 // Register User
 const registerUser = async (req, res) => {
-    const { name, email, password, isAdmin } = req.body;
+    const { firstName, lastName, email, password, isAdmin } = req.body;
+    
     try {
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: "User already exists" });
         }
 
-        const user = await User.create({ name, email, password, isAdmin });
+        const user = await User.create({ firstName, lastName, email, password, isAdmin });
 
         if (user) {
             res.status(201).json({
                 _id: user.id,
-                name: user.name,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
                 isAdmin: user.isAdmin, // Include isAdmin in response
                 token: generateToken(user.id, user.isAdmin), // Include isAdmin in JWT
             });
         } else {
-            res.status(400).json({ message: 'Invalid user data' });
+            res.status(400).json({ message: "Invalid user data" });
         }
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 // Login User
 const loginUser = async (req, res) => {

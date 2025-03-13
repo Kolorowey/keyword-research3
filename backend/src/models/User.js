@@ -2,10 +2,19 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    username: { 
+        type: String, 
+        unique: true, 
+        sparse: true, // Allows multiple null values for unique fields
+        match: [/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"] 
+    },
+    phoneNumber: { type: String }, // Optional
+    country: { type: String }, // Optional
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, default: false }, // Optional admin role
+    isAdmin: { type: Boolean, default: false }, 
 }, { timestamps: true });
 
 // Hash password before saving
