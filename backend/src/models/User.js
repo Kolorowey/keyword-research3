@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String }, // Optional
     country: { type: String }, // Optional
     password: { type: String, required: true },
+    profileImage: { type: String, default: "" }, // Optional profile image URL
     isAdmin: { type: Boolean, default: false }, 
 }, { timestamps: true });
 

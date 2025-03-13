@@ -8,6 +8,7 @@ const scraperRoutes = require("./src/routes/scraperRoutes");
 const geminiSpamCheckerRoutes = require("./src/routes/gemini_api_tool");
 const commonRoutes = require("./src/routes/common_route");
 const keywordEverywhereRoutes = require("./src/routes/keyword_Everywhere"); // Adjust the filename if needed
+const updatwProfilwRoutes = require("./src/routes/updateProfile"); 
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/api/scraper", scraperRoutes);
 app.use("/api/gemini", geminiSpamCheckerRoutes);
 app.use("/api/common", commonRoutes);
 app.use("/api/keywords", keywordEverywhereRoutes);
+app.use("/api/update-profile", updatwProfilwRoutes); 
 
 // Start Server after DB connection
 const startServer = async () => {

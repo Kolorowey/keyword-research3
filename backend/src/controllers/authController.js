@@ -43,9 +43,15 @@ const loginUser = async (req, res) => {
         if (user && (await user.matchPassword(password))) {
             res.json({
                 _id: user.id,
-                name: user.name,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
+                phoneNumber: user.phoneNumber,
+                username: user.username,
+                country: user.country,
                 isAdmin: user.isAdmin, // Include isAdmin in response
+                createdAt: user.createdAt, // Include timestamps
+                updatedAt: user.updatedAt,
                 token: generateToken(user.id, user.isAdmin), // Include isAdmin in JWT
             });
         } else {
@@ -55,5 +61,6 @@ const loginUser = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 module.exports = { registerUser, loginUser, protect, adminMiddleware };
