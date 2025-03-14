@@ -9,10 +9,7 @@ const router = express.Router();
 // @route   PUT /api/users/profile
 // @desc    Update user profile with Base64 image
 // @access  Private
-router.put('/profile', protect, upload.single('profileImage'), asyncHandler(async (req, res) => {   
-    if (!req.file) {
-        return res.status(400).json({ message: "No file selected" });
-    }
+router.put('/profile', protect, upload.single('profileImage'), asyncHandler(async (req, res) => {     
 
     // File size limit check (5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
