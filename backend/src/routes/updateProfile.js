@@ -9,11 +9,10 @@ const router = express.Router();
 // @route   PUT /api/users/profile
 // @desc    Update user profile with Base64 image
 // @access  Private
-router.put('/profile', protect, upload.single('profileImage'), asyncHandler(async (req, res) => {     
-
-    // File size limit check (5MB)
+router.put('/profile', protect, upload.single('profileImage'), asyncHandler(async (req, res) => {    
+    // Check if a file was uploaded and validate its size (5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    if (req.file.size > maxSize) {
+    if (req.file && req.file.size > maxSize) {
         return res.status(400).json({ message: "File size must be less than 5MB" });
     }
 
@@ -48,7 +47,7 @@ router.put('/profile', protect, upload.single('profileImage'), asyncHandler(asyn
     user.phoneNumber = phoneNumber || user.phoneNumber;
     user.country = country || user.country;
 
-    // Convert image to Base64 and store in MongoDB
+    // Convert image to Base64 and store in MongoDB if a new file is uploaded
     if (req.file) {
         user.profileImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
@@ -63,6 +62,7 @@ router.put('/profile', protect, upload.single('profileImage'), asyncHandler(asyn
             username: updatedUser.username,
             email: updatedUser.email,
             phoneNumber: updatedUser.phoneNumber,
+            isAdmin: updatedUser.isAdmin,
             country: updatedUser.country,
             profileImage: updatedUser.profileImage 
         }
