@@ -7,9 +7,13 @@ const upload = require('../middlewares/uploadMiddleware');
 const router = express.Router();
 
 // @route   PUT /api/users/profile
-// @desc    Update user profile
+// @desc    Update user profile with Base64 image
 // @access  Private
 router.put('/profile', protect, upload.single('profileImage'), asyncHandler(async (req, res) => {
+    console.log(req.file); // Debugging line
+    if (!req.file) {
+        return res.status(400).json({ message: "No file Selected" });
+    }
     const { firstName, lastName, username, email, phoneNumber, country } = req.body;
     const user = await User.findById(req.user.id);
 
@@ -41,25 +45,26 @@ router.put('/profile', protect, upload.single('profileImage'), asyncHandler(asyn
     user.phoneNumber = phoneNumber || user.phoneNumber;
     user.country = country || user.country;
 
-    // Update profile image if uploaded
+    // Convert image to Base64 and store in MongoDB
     if (req.file) {
-        user.profileImage = `/uploads/${req.file.filename}`;
+        user.profileImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     const updatedUser = await user.save();
 
     res.status(200).json({
         message: 'Profile updated successfully',
-        user: {
+        updatedUser: { // Add `updatedUser` so it matches the frontend expectation
             firstName: updatedUser.firstName,
             lastName: updatedUser.lastName,
             username: updatedUser.username,
             email: updatedUser.email,
             phoneNumber: updatedUser.phoneNumber,
             country: updatedUser.country,
-            profileImage: updatedUser.profileImage
+            profileImage: updatedUser.profileImage 
         }
     });
+    
 }));
 
 module.exports = router;

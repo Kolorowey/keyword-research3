@@ -52,6 +52,7 @@ const loginUser = async (req, res) => {
                 isAdmin: user.isAdmin, // Include isAdmin in response
                 createdAt: user.createdAt, // Include timestamps
                 updatedAt: user.updatedAt,
+                profileImage: user.profileImage,
                 token: generateToken(user.id, user.isAdmin), // Include isAdmin in JWT
             });
         } else {
