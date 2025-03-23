@@ -11,6 +11,7 @@ const keywordEverywhereRoutes = require("./src/routes/keyword_Everywhere"); // A
 const updateProfileRoutes = require("./src/routes/updateProfile");
 const adminRoutes = require("./src/routes/adminRoutes"); // New Admin Routes
 const blogRoutes = require("./src/routes/blogRoutes");
+const path = require("path");
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,7 @@ app.use(
 );
 
 app.use(express.json()); // Built-in JSON parser
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -40,6 +42,17 @@ app.use("/api/update-profile", updateProfileRoutes);
 
 app.use("/api/admin", adminRoutes); // New Admin Routes
 app.use("/api/blogs", blogRoutes);
+
+
+app.get("/robots.txt", (req, res) => {
+  const robots = `
+    User-agent: *
+    Allow: /
+    Sitemap: http://localhost:5000/api/blogs/sitemap.xml
+  `;
+  res.type("text/plain");
+  res.send(robots);
+});
 
 // Start Server after DB connection
 const startServer = async () => {
