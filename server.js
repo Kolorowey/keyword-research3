@@ -12,6 +12,7 @@ const keywordEverywhereRoutes = require("./src/routes/keyword_Everywhere");
 const updateProfileRoutes = require("./src/routes/updateProfile");
 const adminRoutes = require("./src/routes/adminRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
+const metaTagRoutes = require("./src/routes/metaTags");  
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +44,7 @@ app.use("/api/keywords", keywordEverywhereRoutes);
 app.use("/api/update-profile", updateProfileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use('/api/meta', metaTagRoutes);
 
 app.get("/robots.txt", (req, res) => {
   const robots = `
