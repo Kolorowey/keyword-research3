@@ -48,7 +48,7 @@ app.get("/robots.txt", (req, res) => {
   const robots = `
     User-agent: *
     Allow: /
-    Sitemap: http://localhost:5000/api/blogs/sitemap.xml
+    Sitemap: https://www.keywordraja.com//api/blogs/sitemap.xml
   `;
   res.type("text/plain");
   res.send(robots);
