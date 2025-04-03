@@ -61,6 +61,12 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
+app.get("/api/config", (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID, // Use backend .env variable
+  });
+});
+
 // Start Server after DB connection
 const startServer = async () => {
   try {
