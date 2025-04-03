@@ -67,6 +67,8 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+
+
 // Start Server after DB connection
 const startServer = async () => {
   try {
