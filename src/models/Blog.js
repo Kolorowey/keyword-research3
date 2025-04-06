@@ -5,20 +5,20 @@ const blogSchema = new mongoose.Schema(
     title: { 
       type: String, 
       required: true,
-      trim: true // Remove extra whitespace
+      trim: true 
     },
     metaTitle: { 
       type: String, 
       trim: true, 
-      maxlength: 60 // Ideal length for SEO title
-    }, // Dedicated SEO title, falls back to title
+      maxlength: 60 
+    },
     slug: { 
       type: String, 
       required: true, 
-      unique: true, // Ensure unique URLs
+      unique: true,
       lowercase: true, 
       trim: true 
-    }, // SEO-friendly URL slug
+    },
     topic: { 
       type: String, 
       required: true,
@@ -28,45 +28,55 @@ const blogSchema = new mongoose.Schema(
       type: String, 
       required: true,
       trim: true,
-      maxlength: 160 // Ideal length for meta description
-    }, // Will double as meta description if metaDescription not set
+      maxlength: 160 
+    },
     metaDescription: { 
       type: String, 
       trim: true, 
-      maxlength: 160 // Dedicated SEO description
-    }, // Dedicated SEO description, falls back to shortDescription
+      maxlength: 160 
+    },
     content: { 
       type: String, 
       required: true 
     },
     images: {
-      original: { type: String, default: null }, // Original uploaded image
-      hero: { type: String, default: null },     // 16:9 version
-      thumbnail: { type: String, default: null }, // 1:1 version
+      original: { type: String, default: null },
+      hero: { type: String, default: null },
+      thumbnail: { type: String, default: null },
     },
     imageAlt: { type: String, default: null },
     author: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: "User", 
       required: true 
-    }, // Reference to admin user
+    },
     tags: [{ 
       type: String, 
       trim: true,
-      lowercase: true // Standardize tags
-    }], // Keywords for searchability
+      lowercase: true 
+    }],
     published: { 
       type: Boolean, 
       default: false 
-    }, // Draft or live
+    },
     metaKeywords: [{ 
       type: String, 
       trim: true,
       lowercase: true 
-    }], // Optional SEO keywords
+    }],
+    publishedBy: { 
+      type: String, 
+      required: true,
+      trim: true 
+    }, // Added required publishedBy field
+    publisherLinkedIn: { 
+      type: String, 
+      trim: true,
+      default: null 
+    }, // Added optional publisherLinkedIn field
   },
   { 
-    timestamps: true // createdAt & updatedAt for sitemap and schema
+    timestamps: true 
   }
 );
 

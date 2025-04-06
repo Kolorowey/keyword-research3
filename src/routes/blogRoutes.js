@@ -36,7 +36,7 @@ router.get(
   "/",
   asyncHandler(async (req, res) => {
     const blogs = await Blog.find({ published: true })
-      .select("title shortDescription images slug")
+      .select("title shortDescription images slug publishedBy publisherLinkedIn createdAt") // Added publisherLinkedIn and createdAt
       .sort({ createdAt: -1 });
     res.status(200).json(blogs);
   })
@@ -48,11 +48,9 @@ router.get(
 router.get(
   "/sitemap.xml",
   asyncHandler(async (req, res) => {
-    // Fetch published blogs
     const blogs = await Blog.find({ published: true }).select("slug updatedAt");
     const baseUrl = "https://www.keywordraja.com";
 
-    // Static keyword research pages
     const staticPages = [
       { path: "/", changefreq: "daily", priority: "1.0", lastmod: "2025-04-06" },
       { path: "/related-keywords", changefreq: "weekly", priority: "0.8", lastmod: "2025-04-06" },
@@ -65,7 +63,6 @@ router.get(
       { path: "/ad-competition", changefreq: "weekly", priority: "0.8", lastmod: "2025-04-06" },
     ];
 
-    // Generate sitemap
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
       <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
         ${staticPages
@@ -105,14 +102,13 @@ router.get(
   asyncHandler(async (req, res) => {
     const blog = await Blog.findOne({ slug: req.params.slug, published: true })
       .populate("author", "name")
-      .select("title metaTitle shortDescription metaDescription content images imageAlt author slug tags metaKeywords createdAt");
+      .select("title metaTitle shortDescription metaDescription content images imageAlt author slug tags metaKeywords createdAt publishedBy publisherLinkedIn"); // Added publishedBy and publisherLinkedIn
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
     res.status(200).json(blog);
   })
 );
-
 
 // @route   POST /api/blogs
 // @desc    Create a new blog post (Admin only)
@@ -136,9 +132,11 @@ router.post(
       tags,
       metaKeywords,
       published,
+      publishedBy,        // Added publishedBy
+      publisherLinkedIn   // Added publisherLinkedIn
     } = req.body;
 
-    if (!title || !slug || !topic || !shortDescription || !content) {
+    if (!title || !slug || !topic || !shortDescription || !content || !publishedBy) { // Added publishedBy to required fields check
       return res.status(400).json({ message: "All required fields must be provided!" });
     }
 
@@ -192,6 +190,8 @@ router.post(
       tags: parsedTags,
       metaKeywords: parsedMetaKeywords,
       published: published === "true" || true,
+      publishedBy,        // Added publishedBy
+      publisherLinkedIn   // Added publisherLinkedIn
     });
 
     const createdBlog = await blog.save();
