@@ -1,0 +1,4 @@
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/the-impact-of-coronavirus-lessons-learned-from-a-global-pandemic","timestamp":"2025-04-06T18:25:43.064Z"}
+{"level":"warn","message":"Invalid image URL provided by admin demo13@example.com: /uploads/1743960962041-images (2).jpeg","timestamp":"2025-04-06T18:25:43.289Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/the-impact-of-coronavirus-lessons-learned-from-a-global-pandemic","timestamp":"2025-04-06T18:26:38.706Z"}
+{"level":"info","message":"Blog the-impact-of-coronavirus-lessons-learned-from-a-global-pandemic updated successfully by admin demo13@example.com","timestamp":"2025-04-06T18:26:39.419Z"}
