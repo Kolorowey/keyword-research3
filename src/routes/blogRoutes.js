@@ -113,18 +113,6 @@ router.get(
   })
 );
 
-// @route   GET /api/admin/blogs/count
-// @desc    Get total number of blogs
-// @access  Public (no protection)
-router.get(
-  "/count",
-  asyncHandler(async (req, res) => {
-    console.log("Blog count endpoint hit");
-    const blogCount = await Blog.countDocuments({});
-    console.log("Blog count:", blogCount);
-    res.status(200).json({ blogCount });
-  })
-);
 
 // @route   POST /api/blogs
 // @desc    Create a new blog post (Admin only)
