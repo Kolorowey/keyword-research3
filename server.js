@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./src/config/dbConfig");
 const path = require("path");
+const multer = require("multer");
 
 const authRoutes = require("./src/routes/authRoutes");
 const scraperRoutes = require("./src/routes/scraperRoutes");
@@ -12,7 +13,8 @@ const keywordEverywhereRoutes = require("./src/routes/keyword_Everywhere");
 const updateProfileRoutes = require("./src/routes/updateProfile");
 const adminRoutes = require("./src/routes/adminRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
-const metaTagRoutes = require("./src/routes/metaTags");  
+const metaTagRoutes = require("./src/routes/metaTags");
+const forumRoutes = require("./src/routes/forumRoutes"); // New forum routes
 
 // Load environment variables
 dotenv.config();
@@ -30,7 +32,7 @@ app.use(
 );
 
 app.use(express.json()); // Built-in JSON parser
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
 
 // Serve Frontend Static Files
 app.use(express.static(path.join(__dirname, "dist"))); // Serve files from dist
@@ -44,7 +46,8 @@ app.use("/api/keywords", keywordEverywhereRoutes);
 app.use("/api/update-profile", updateProfileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
-app.use('/api/meta', metaTagRoutes);
+app.use("/api/meta", metaTagRoutes);
+app.use("/api/forum", forumRoutes); // Add forum routes
 
 app.get("/robots.txt", (req, res) => {
   const robots = `
@@ -60,10 +63,6 @@ app.get("/robots.txt", (req, res) => {
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
-
-
-
-
 
 // Start Server after DB connection
 const startServer = async () => {
