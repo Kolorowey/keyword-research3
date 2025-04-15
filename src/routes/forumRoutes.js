@@ -4,6 +4,7 @@ const Post = require("../models/Post");
 const multer = require("multer");
 const path = require("path");
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -27,7 +28,6 @@ const upload = multer({
   },
 });
 
-// Authentication middleware
 const isAuthenticated = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -42,17 +42,34 @@ const isAuthenticated = async (req, res, next) => {
   }
 };
 
+const isAdmin = async (req, res, next) => {
+  try {
+    // console.log("Checking admin for user ID:", req.user.id);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error("User not found for ID:", req.user.id);
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (!user.isAdmin) {
+      console.error("Non-admin user attempted access:", req.user.id);
+      return res.status(403).json({ error: "Forbidden: Admin access required" });
+    }
+    next();
+  } catch (error) {
+    console.error("Error in isAdmin middleware:", error.message);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
 
-// Get all posts with sorting and filtering
+// Get all posts with sorting and filtering (public, checked posts)
 router.get("/posts", async (req, res) => {
   try {
     const { sort = "newest", time = "all", search = "" } = req.query;
 
-    let query = { isDraft: false };
+    let query = { isDraft: false, checkedByAdmin: true };
     if (search) {
       query.title = { $regex: search, $options: "i" };
     }
-
     if (time === "today") {
       query.createdAt = {
         $gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -64,13 +81,45 @@ router.get("/posts", async (req, res) => {
       sortOption.createdAt = -1;
     }
 
-    const posts = await Post.find(query).sort(sortOption);    
+    const posts = await Post.find(query).sort(sortOption);
+    // console.log("Posts sent:", posts);
     res.json(posts);
   } catch (error) {
     console.error("Error in GET /posts:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// Get all unchecked posts (admin only)
+router.get("/admin/posts", isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const posts = await Post.find({ checkedByAdmin: false, isDraft: false }).sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    console.error("Error in GET /admin/posts:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Approve a post (admin only)
+router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    if (post.checkedByAdmin) {
+      return res.status(400).json({ error: "Post already checked" });
+    }
+    post.checkedByAdmin = true;
+    await post.save();
+    res.json({ message: "Post approved successfully", post });
+  } catch (error) {
+    console.error("Error in PUT /admin/posts/:id/check:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 // React to a post
 router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
