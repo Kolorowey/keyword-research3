@@ -37,6 +37,7 @@ const PostSchema = new mongoose.Schema({
       },
     },
   ],
+  checkedByAdmin: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("Post", PostSchema);
