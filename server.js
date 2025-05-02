@@ -25,7 +25,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "*", // Adjust to your domain in production (e.g., "https://yourdomain.com")
+    origin: "https://www.keywordraja.com", // Adjust to your domain in production (e.g., "https://yourdomain.com")
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
