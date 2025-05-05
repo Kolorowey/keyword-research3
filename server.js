@@ -14,7 +14,7 @@ const updateProfileRoutes = require("./src/routes/updateProfile");
 const adminRoutes = require("./src/routes/adminRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
 const metaTagRoutes = require("./src/routes/metaTags");
-const forumRoutes = require("./src/routes/forumRoutes"); // New forum routes
+const forumRoutes = require("./src/routes/forumRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -22,10 +22,21 @@ dotenv.config();
 // Initialize Express App
 const app = express();
 
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Store files in uploads directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, "ads.txt"); // Always name the file ads.txt (overwrites existing)
+  },
+});
+const upload = multer({ storage });
+
 // Middleware
 app.use(
   cors({
-    origin: "*", // Adjust to your domain in production (e.g., "https://yourdomain.com")
+    origin: "*", // Adjust to your domain in production
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -47,7 +58,17 @@ app.use("/api/update-profile", updateProfileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/meta", metaTagRoutes);
-app.use("/api/forum", forumRoutes); // Add forum routes
+app.use("/api/forum", forumRoutes);
+
+// Serve ads.txt publicly
+app.get("/ads.txt", (req, res) => {
+  const filePath = path.join(__dirname, "uploads", "ads.txt");
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send("ads.txt not found");
+    }
+  });
+});
 
 app.get("/robots.txt", (req, res) => {
   const robots = `

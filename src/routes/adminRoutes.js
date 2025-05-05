@@ -1,6 +1,6 @@
 const express = require("express");
 const asyncHandler = require("express-async-handler");
-const { protect } = require("../middlewares/authMiddleware"); // Only using protect, admin logic moved to enhancedAdmin
+const { protect } = require("../middlewares/authMiddleware");
 const User = require("../models/User");
 const Blog = require("../models/Blog");
 const rateLimit = require("express-rate-limit");
@@ -54,23 +54,37 @@ const enhancedAdmin = asyncHandler(async (req, res, next) => {
 });
 
 // Define upload directory
-const uploadDir = path.join(__dirname, "../../uploads");
+const uploadDir = path.join(__dirname, "../../Uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Multer config for image uploads
-const storage = multer.diskStorage({
+const imageStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
-const upload = multer({
-  storage,
+const imageUpload = multer({
+  storage: imageStorage,
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only images are allowed!"), false);
   },
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+// Multer config for ads.txt uploads
+const textStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, "ads.txt"), // Always save as ads.txt
+});
+const textUpload = multer({
+  storage: textStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "text/plain") cb(null, true);
+    else cb(new Error("Only .txt files are allowed!"), false);
+  },
+  limits: { fileSize: 1024 * 1024 }, // 1MB limit
 });
 
 // @route   GET /api/admin/users
@@ -130,7 +144,7 @@ router.put(
   protect,
   enhancedAdmin,
   adminRateLimiter,
-  upload.single("image"),
+  imageUpload.single("image"),
   asyncHandler(async (req, res) => {
     try {
       const {
@@ -167,9 +181,9 @@ router.put(
 
       let imageData = blog.images;
       if (req.file) {
-        const originalPath = `/uploads/${req.file.filename}`;
-        const heroPath = `/uploads/hero-${req.file.filename}`;
-        const thumbnailPath = `/uploads/thumb-${req.file.filename}`;
+        const originalPath = `/Uploads/${req.file.filename}`;
+        const heroPath = `/Uploads/hero-${req.file.filename}`;
+        const thumbnailPath = `/Uploads/thumb-${req.file.filename}`;
 
         try {
           await sharp(req.file.path)
@@ -217,6 +231,31 @@ router.put(
     } catch (error) {
       logger.error(`Error updating blog ${req.params.slug} by admin ${req.user.email}: ${error.message}`);
       res.status(500).json({ message: "Internal server error" });
+    }
+  })
+);
+
+// @route   POST /api/admin/upload-ads-txt
+// @desc    Upload ads.txt file (Admin only)
+// @access  Private (Admin)
+router.post(
+  "/upload-ads-txt",
+  protect,
+  enhancedAdmin,
+  adminRateLimiter,
+  textUpload.single("adsTxt"),
+  asyncHandler(async (req, res) => {
+    try {
+      if (!req.file) {
+        logger.warn(`No file uploaded for ads.txt by admin ${req.user.email}`);
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      logger.info(`ads.txt uploaded successfully by admin ${req.user.email}`);
+      res.status(200).json({ message: "ads.txt uploaded successfully" });
+    } catch (error) {
+      logger.error(`Error uploading ads.txt by admin ${req.user.email}: ${error.message}`);
+      res.status(500).json({ message: "Error uploading ads.txt", error: error.message });
     }
   })
 );
