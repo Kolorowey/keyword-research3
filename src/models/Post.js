@@ -5,7 +5,12 @@ const PostSchema = new mongoose.Schema({
   content: { type: String, required: false },
   contentType: { type: String, enum: ["html", "image", "video"], default: "html" },
   image: { type: String, required: false },
-  author: { type: String, required: true },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  username: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   comments: [
     {

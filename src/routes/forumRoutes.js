@@ -5,6 +5,8 @@ const multer = require("multer");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
+
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -34,24 +36,31 @@ const isAuthenticated = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ error: "No token provided" });
     }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    // console.log("Decoded JWT:", decoded); // Debug: Log payload
+
+    // Fetch user from database
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      console.error("User not found for ID:", decoded.id);
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    req.user = user; // Set req.user to Mongoose document
+    // console.log("req.user:", user); // Debug: Log user document
     next();
   } catch (error) {
+    console.error("Authentication error:", error.message);
     res.status(401).json({ error: "Invalid token" });
   }
 };
 
 const isAdmin = async (req, res, next) => {
   try {
-    // console.log("Checking admin for user ID:", req.user.id);
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      console.error("User not found for ID:", req.user.id);
-      return res.status(404).json({ error: "User not found" });
-    }
-    if (!user.isAdmin) {
-      console.error("Non-admin user attempted access:", req.user.id);
+    // No need to fetch user again, as isAuthenticated already sets req.user
+    if (!req.user.isAdmin) {
+      console.error("Non-admin user attempted access:", req.user._id);
       return res.status(403).json({ error: "Forbidden: Admin access required" });
     }
     next();
@@ -60,6 +69,64 @@ const isAdmin = async (req, res, next) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
+
+
+// Get notifications for the authenticated user
+router.get("/notifications", isAuthenticated, async (req, res) => {
+  try {
+    const notifications = await Notification.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Route to get unread notification count
+router.get("/notifications/unread-count", isAuthenticated, async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      console.warn("User authentication failed:", req.user);
+      return res.status(401).json({ error: "User not authenticated or missing ID" });
+    }
+
+    const unreadCount = await Notification.countDocuments({
+      userId: req.user._id,
+      isRead: false,
+    });
+
+    // console.log(`Unread notifications for user ${req.user._id}: ${unreadCount}`);
+    res.status(200).json({ unreadCount });
+  } catch (error) {
+    console.error("Error in GET /notifications/unread-count:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Route to mark all notifications as read
+router.put("/notifications/mark-read", isAuthenticated, async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      console.warn("User authentication failed:", req.user);
+      return res.status(401).json({ error: "User not authenticated or missing ID" });
+    }
+
+    const result = await Notification.updateMany(
+      { userId: req.user._id, isRead: false },
+      { $set: { isRead: true } }
+    );
+   
+    res.status(200).json({ message: "Notifications marked as read", modifiedCount: result.modifiedCount });
+  } catch (error) {
+    console.error("Error in PUT /notifications/mark-read:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
 
 // Get all posts with sorting and filtering (public, checked posts)
 router.get("/posts", async (req, res) => {
@@ -101,7 +168,6 @@ router.get("/admin/posts", isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
-// Approve a post (admin only)
 router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -113,12 +179,25 @@ router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) 
     }
     post.checkedByAdmin = true;
     await post.save();
+    const user = await User.findById(post.author);
+    if (!user) {
+      console.warn(`User with ID "${post.author}" not found for notification`);
+      return res.json({ message: "Post approved successfully, no notification created (user not found)", post });
+    }
+    const notification = new Notification({
+      userId: post.author,
+      message: `Your post "${post.title}" has been approved by an admin.`,
+      postId: post._id,
+    });
+    await notification.save();
+    // console.log(`Notification created for user ${user._id}: ${notification._id}`);
     res.json({ message: "Post approved successfully", post });
   } catch (error) {
     console.error("Error in PUT /admin/posts/:id/check:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 
 // React to a post
@@ -188,57 +267,71 @@ router.get("/posts/:id", async (req, res) => {
 // Create a new post
 router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    const { title, content, contentType, author } = req.body;
-    const finalAuthor = author || req.user.firstName || "Anonymous";
-
+    const { title, content, contentType, username } = req.body;
+    // console.log("POST /posts - req.user:", req.user);
+    if (!req.user || !req.user._id) {
+      console.warn("User authentication failed:", req.user);
+      return res.status(401).json({ error: "User not authenticated or missing ID" });
+    }
     if (!title) {
       return res.status(400).json({ error: "Title is required" });
     }
-
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
     if (contentType === "html" && !content) {
       return res.status(400).json({ error: "Content is required for text posts" });
     }
-
     if (["image", "video"].includes(contentType) && !req.file) {
       return res.status(400).json({ error: "Media is required for image/video posts" });
     }
-
     const newPost = new Post({
       title,
       content: content || "",
       contentType: contentType || "html",
       image: req.file ? `/Uploads/${req.file.filename}` : null,
-      author: finalAuthor,
+      author: req.user._id,
+      username: username,
+      isDraft: false,
     });
-
     await newPost.save();
+    // console.log("Post created:", newPost._id);
     res.status(201).json(newPost);
   } catch (error) {
+    console.error("Error in POST /posts:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// Save draft
+
+// Save a draft post
 router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    const { title, content, contentType, author } = req.body;
-    const finalAuthor = author || req.user.firstName || "Anonymous";
-
-    const draftPost = new Post({
+    const { title, content, contentType } = req.body;
+    // console.log("POST /posts/draft - req.user:", req.user);
+    if (!req.user || !req.user._id) {
+      console.warn("User authentication failed:", req.user);
+      return res.status(401).json({ error: "User not authenticated or missing ID" });
+    }
+    const newPost = new Post({
       title: title || "Untitled Draft",
       content: content || "",
       contentType: contentType || "html",
       image: req.file ? `/Uploads/${req.file.filename}` : null,
-      author: finalAuthor,
+      author: req.user._id,
       isDraft: true,
     });
-
-    await draftPost.save();
-    res.status(201).json(draftPost);
+    await newPost.save();
+    // console.log("Draft created:", newPost._id);
+    res.status(201).json(newPost);
   } catch (error) {
+    console.error("Error in POST /posts/draft:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
+
 
 // Add a comment
 router.post(
