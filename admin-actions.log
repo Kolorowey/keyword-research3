@@ -91,3 +91,87 @@
 {"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T06:15:17.153Z"}
 {"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T06:15:17.179Z"}
 {"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T06:15:17.325Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:31:16.435Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:31:16.464Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:31:16.544Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:31:16.674Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:31:16.793Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:31:16.808Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:37:18.718Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:37:18.729Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:37:18.838Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:37:18.977Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:37:18.981Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:37:19.117Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:38:33.840Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:38:33.856Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:38:34.062Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:38:34.174Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:38:34.201Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:38:34.343Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:40:48.676Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:40:48.693Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:40:48.809Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:40:51.407Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:40:51.436Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:40:51.563Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:40:51.614Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:40:51.696Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:40:51.824Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:07.915Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:07.958Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:08.095Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:08.142Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:08.224Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:08.353Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:28.829Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:28.833Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:28.947Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:29.069Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:29.086Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:29.202Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:30.884Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:30.887Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:31.005Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:41:31.129Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:41:31.146Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:41:31.256Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:42:08.326Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:42:08.331Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:42:08.442Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:42:08.569Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:42:08.577Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:42:08.684Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:43:11.084Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:43:11.091Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:43:11.219Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:43:12.880Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:43:12.900Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:43:13.038Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:43:13.135Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:43:13.180Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:43:13.312Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:43:31.468Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:43:31.471Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:43:31.570Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:43:31.699Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:43:31.704Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:43:31.820Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:44:06.321Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:44:06.345Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:44:06.495Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:44:06.550Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:44:06.624Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:44:06.748Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:55:01.099Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:55:01.110Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:55:01.245Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T10:55:01.383Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T10:55:01.452Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T10:55:01.521Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T12:14:48.375Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T12:14:48.583Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/blogs/count","timestamp":"2025-05-06T12:14:48.788Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T12:14:48.893Z"}
+{"level":"info","message":"Blog counts retrieved by admin demo13@example.com: Published=5, Draft=0, Total=5","timestamp":"2025-05-06T12:14:48.949Z"}
+{"level":"info","message":"Admin demo13@example.com accessed /api/admin/users","timestamp":"2025-05-06T12:14:49.300Z"}

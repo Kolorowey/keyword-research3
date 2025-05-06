@@ -15,6 +15,7 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const blogRoutes = require("./src/routes/blogRoutes");
 const metaTagRoutes = require("./src/routes/metaTags");
 const forumRoutes = require("./src/routes/forumRoutes");
+const adminToggleControlRoutes = require("./src/routes/adminToggleRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -43,7 +44,7 @@ app.use(
 );
 
 app.use(express.json()); // Built-in JSON parser
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "Uploads"))); // Serve uploaded files
 
 // Serve Frontend Static Files
 app.use(express.static(path.join(__dirname, "dist"))); // Serve files from dist
@@ -59,10 +60,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/meta", metaTagRoutes);
 app.use("/api/forum", forumRoutes);
+app.use("/api/admin-toggle-control", adminToggleControlRoutes);
 
 // Serve ads.txt publicly
 app.get("/ads.txt", (req, res) => {
-  const filePath = path.join(__dirname, "uploads", "ads.txt");
+  const filePath = path.join(__dirname, "Uploads", "ads.txt");
   res.sendFile(filePath, (err) => {
     if (err) {
       res.status(404).send("ads.txt not found");
