@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 
-
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: "./Uploads/",
@@ -38,17 +37,13 @@ const isAuthenticated = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("Decoded JWT:", decoded); // Debug: Log payload
-
-    // Fetch user from database
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
       console.error("User not found for ID:", decoded.id);
       return res.status(401).json({ error: "User not found" });
     }
 
-    req.user = user; // Set req.user to Mongoose document
-    // console.log("req.user:", user); // Debug: Log user document
+    req.user = user;
     next();
   } catch (error) {
     console.error("Authentication error:", error.message);
@@ -58,7 +53,6 @@ const isAuthenticated = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
   try {
-    // No need to fetch user again, as isAuthenticated already sets req.user
     if (!req.user.isAdmin) {
       console.error("Non-admin user attempted access:", req.user._id);
       return res.status(403).json({ error: "Forbidden: Admin access required" });
@@ -69,7 +63,6 @@ const isAdmin = async (req, res, next) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
-
 
 // Get notifications for the authenticated user
 router.get("/notifications", isAuthenticated, async (req, res) => {
@@ -97,7 +90,6 @@ router.get("/notifications/unread-count", isAuthenticated, async (req, res) => {
       isRead: false,
     });
 
-    // console.log(`Unread notifications for user ${req.user._id}: ${unreadCount}`);
     res.status(200).json({ unreadCount });
   } catch (error) {
     console.error("Error in GET /notifications/unread-count:", error);
@@ -125,9 +117,6 @@ router.put("/notifications/mark-read", isAuthenticated, async (req, res) => {
   }
 });
 
-
-
-
 // Get all posts with sorting and filtering (public, checked posts)
 router.get("/posts", async (req, res) => {
   try {
@@ -149,7 +138,6 @@ router.get("/posts", async (req, res) => {
     }
 
     const posts = await Post.find(query).sort(sortOption);
-    // console.log("Posts sent:", posts);
     res.json(posts);
   } catch (error) {
     console.error("Error in GET /posts:", error);
@@ -168,6 +156,7 @@ router.get("/admin/posts", isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
+// Approve post (admin only)
 router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -190,7 +179,6 @@ router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) 
       postId: post._id,
     });
     await notification.save();
-    // console.log(`Notification created for user ${user._id}: ${notification._id}`);
     res.json({ message: "Post approved successfully", post });
   } catch (error) {
     console.error("Error in PUT /admin/posts/:id/check:", error);
@@ -198,7 +186,83 @@ router.put("/admin/posts/:id/check", isAuthenticated, isAdmin, async (req, res) 
   }
 });
 
+// Delete a post (admin only)
+router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
 
+    await post.deleteOne();
+    
+    // Create notification for the post author
+    const user = await User.findById(post.author);
+    if (user) {
+      const notification = new Notification({
+        userId: post.author,
+        message: `Your post "${post.title}" has been deleted by an admin.`,
+        postId: post._id,
+      });
+      await notification.save();
+    }
+
+    res.json({ message: "Post deleted successfully" });
+  } catch (error) {
+    console.error("Error in DELETE /posts/:id:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Edit a post (admin only)
+router.put("/forum/edit/:id", isAuthenticated, isAdmin, upload.single("image"), async (req, res) => {
+  try {
+    const { title, content, contentType, username } = req.body;
+    const post = await Post.findById(req.params.id);
+    
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Validate inputs
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    if (contentType === "html" && !content) {
+      return res.status(400).json({ error: "Content is required for text posts" });
+    }
+
+    // Update post fields
+    post.title = title;
+    post.content = content || post.content;
+    post.contentType = contentType || post.contentType;
+    post.username = username;
+    if (req.file) {
+      post.image = `/Uploads/${req.file.filename}`;
+    }
+    
+    await post.save();
+
+    // Create notification for the post author
+    const user = await User.findById(post.author);
+    if (user) {
+      const notification = new Notification({
+        userId: post.author,
+        message: `Your post "${post.title}" has been edited by an admin.`,
+        postId: post._id,
+      });
+      await notification.save();
+    }
+
+    res.json({ message: "Post updated successfully", post });
+  } catch (error) {
+    console.error("Error in PUT /posts/:id:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // React to a post
 router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
@@ -220,7 +284,6 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
 
     if (existingReaction) {
       if (existingReaction.reactionType === reactionType) {
-        // Remove reaction
         post.userReactions = post.userReactions.filter(
           (r) => r.userId.toString() !== userId
         );
@@ -229,7 +292,6 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
           (post.reactions[reactionType] || 0) - 1
         );
       } else {
-        // Update reaction
         post.reactions[existingReaction.reactionType] = Math.max(
           0,
           (post.reactions[existingReaction.reactionType] || 0) - 1
@@ -238,7 +300,6 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
         post.reactions[reactionType] = (post.reactions[reactionType] || 0) + 1;
       }
     } else {
-      // Add new reaction
       post.userReactions.push({ userId, reactionType });
       post.reactions[reactionType] = (post.reactions[reactionType] || 0) + 1;
     }
@@ -268,7 +329,6 @@ router.get("/posts/:id", async (req, res) => {
 router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
     const { title, content, contentType, username } = req.body;
-    // console.log("POST /posts - req.user:", req.user);
     if (!req.user || !req.user._id) {
       console.warn("User authentication failed:", req.user);
       return res.status(401).json({ error: "User not authenticated or missing ID" });
@@ -295,7 +355,6 @@ router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) 
       isDraft: false,
     });
     await newPost.save();
-    // console.log("Post created:", newPost._id);
     res.status(201).json(newPost);
   } catch (error) {
     console.error("Error in POST /posts:", error);
@@ -303,12 +362,10 @@ router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) 
   }
 });
 
-
 // Save a draft post
 router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
     const { title, content, contentType } = req.body;
-    // console.log("POST /posts/draft - req.user:", req.user);
     if (!req.user || !req.user._id) {
       console.warn("User authentication failed:", req.user);
       return res.status(401).json({ error: "User not authenticated or missing ID" });
@@ -322,16 +379,12 @@ router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req,
       isDraft: true,
     });
     await newPost.save();
-    // console.log("Draft created:", newPost._id);
     res.status(201).json(newPost);
   } catch (error) {
     console.error("Error in POST /posts/draft:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
-
 
 // Add a comment
 router.post(
