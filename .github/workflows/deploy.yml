@@ -18,17 +18,21 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+          echo "SSH setup complete"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
 
       - name: Deploy to VPS
         run: |
+          echo "Connecting to $VPS_USER@$VPS_HOST on port $VPS_PORT"
           ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST -p $VPS_PORT << 'EOF'
+            echo "Logged into VPS"
             cd $VPS_DESTINATION
             git pull origin main
             npm install           
             pm2 restart keyword-raja
+            echo "Deployment complete"
           EOF
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
