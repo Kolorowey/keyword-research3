@@ -4,6 +4,7 @@ const cors = require("cors");
 const connectDB = require("./src/config/dbConfig");
 const path = require("path");
 const multer = require("multer");
+const fs = require("fs");
 
 const authRoutes = require("./src/routes/authRoutes");
 const scraperRoutes = require("./src/routes/scraperRoutes");
@@ -23,13 +24,20 @@ dotenv.config();
 // Initialize Express App
 const app = express();
 
-// Configure Multer for file uploads
+// Ensure Uploads/blogs_image directory exists
+const uploadsDir = path.join(__dirname, "Uploads");
+const blogsImageDir = path.join(uploadsDir, "blogs_image");
+if (!fs.existsSync(blogsImageDir)) {
+  fs.mkdirSync(blogsImageDir, { recursive: true });
+}
+
+// Configure Multer for ads.txt uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Store files in uploads directory
+    cb(null, uploadsDir); // Store ads.txt in Uploads
   },
   filename: (req, file, cb) => {
-    cb(null, "ads.txt"); // Always name the file ads.txt (overwrites existing)
+    cb(null, "ads.txt"); // Always name the file ads.txt
   },
 });
 const upload = multer({ storage });
@@ -37,14 +45,22 @@ const upload = multer({ storage });
 // Middleware
 app.use(
   cors({
-    origin: "*", // Adjust to your domain in production
+    origin: process.env.NODE_ENV === "production" ? "https://www.keywordraja.com" : "*", // Restrict in production
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
-app.use(express.json()); // Built-in JSON parser
-app.use("/uploads", express.static(path.join(__dirname, "Uploads"))); // Serve uploaded files
+app.use(express.json()); // Parse JSON bodies
+
+// Serve static files from Uploads (including blogs_image)
+app.use("/uploads", express.static(uploadsDir, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg") || filePath.endsWith(".png")) {
+      res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache images for 1 year
+    }
+  }
+}));
 
 // Serve Frontend Static Files
 app.use(express.static(path.join(__dirname, "dist"))); // Serve files from dist
@@ -64,7 +80,7 @@ app.use("/api/admin-toggle-control", adminToggleControlRoutes);
 
 // Serve ads.txt publicly
 app.get("/ads.txt", (req, res) => {
-  const filePath = path.join(__dirname, "Uploads", "ads.txt");
+  const filePath = path.join(uploadsDir, "ads.txt");
   res.sendFile(filePath, (err) => {
     if (err) {
       res.status(404).send("ads.txt not found");
@@ -72,11 +88,12 @@ app.get("/ads.txt", (req, res) => {
   });
 });
 
+// Serve robots.txt
 app.get("/robots.txt", (req, res) => {
   const robots = `
     User-agent: *
     Allow: /
-    Sitemap: https://www.keywordraja.com/api/blogs/sitemap.xml
+    Sitemap: ${process.env.NODE_ENV === "production" ? "https://www.keywordraja.com" : "http://localhost:5000"}/api/blogs/sitemap.xml
   `;
   res.type("text/plain");
   res.send(robots);
@@ -84,7 +101,11 @@ app.get("/robots.txt", (req, res) => {
 
 // Handle Client-Side Routing (for React Router)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+  res.sendFile(path.join(__dirname, "dist", "index.html"), (err) => {
+    if (err) {
+      res.status(500).send("Error serving index.html");
+    }
+  });
 });
 
 // Start Server after DB connection

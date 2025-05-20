@@ -10,7 +10,7 @@ const path = require("path");
 const router = express.Router();
 
 // Define upload directory
-const uploadDir = path.join(__dirname, "../../uploads");
+const uploadDir = path.join(__dirname, "../../Uploads/blogs_image");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -36,7 +36,7 @@ router.get(
   "/",
   asyncHandler(async (req, res) => {
     const blogs = await Blog.find({ published: true })
-      .select("title shortDescription images slug publishedBy publisherLinkedIn createdAt") // Added publisherLinkedIn and createdAt
+      .select("title shortDescription images slug publishedBy publisherLinkedIn createdAt")
       .sort({ createdAt: -1 });
     res.status(200).json(blogs);
   })
@@ -102,7 +102,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const blog = await Blog.findOne({ slug: req.params.slug, published: true })
       .populate("author", "name")
-      .select("title metaTitle shortDescription metaDescription content images imageAlt author slug tags metaKeywords createdAt publishedBy publisherLinkedIn"); // Added publishedBy and publisherLinkedIn
+      .select("title metaTitle shortDescription metaDescription content images imageAlt author slug tags metaKeywords createdAt publishedBy publisherLinkedIn");
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
@@ -132,11 +132,11 @@ router.post(
       tags,
       metaKeywords,
       published,
-      publishedBy,        // Added publishedBy
-      publisherLinkedIn   // Added publisherLinkedIn
+      publishedBy,
+      publisherLinkedIn
     } = req.body;
 
-    if (!title || !slug || !topic || !shortDescription || !content || !publishedBy) { // Added publishedBy to required fields check
+    if (!title || !slug || !topic || !shortDescription || !content || !publishedBy) {
       return res.status(400).json({ message: "All required fields must be provided!" });
     }
 
@@ -150,16 +150,18 @@ router.post(
     let imageData = { original: null, hero: null, thumbnail: null };
 
     if (req.file) {
-      const originalPath = `/uploads/${req.file.filename}`;
-      const heroPath = `/uploads/hero-${req.file.filename}`;
-      const thumbnailPath = `/uploads/thumb-${req.file.filename}`;
+      const originalPath = `/uploads/blogs_image/${req.file.filename}`;
+      const heroPath = `/uploads/blogs_image/hero-${req.file.filename}`;
+      const thumbnailPath = `/uploads/blogs_image/thumb-${req.file.filename}`;
 
       try {
         await sharp(req.file.path)
           .resize({ width: 1600, height: 900, fit: "cover" })
+          .jpeg({ quality: 80 })
           .toFile(path.join(uploadDir, `hero-${req.file.filename}`));
         await sharp(req.file.path)
           .resize({ width: 400, height: 400, fit: "cover" })
+          .jpeg({ quality: 80 })
           .toFile(path.join(uploadDir, `thumb-${req.file.filename}`));
       } catch (err) {
         return res.status(500).json({ message: "Image processing failed", error: err.message });
@@ -190,8 +192,8 @@ router.post(
       tags: parsedTags,
       metaKeywords: parsedMetaKeywords,
       published: published === "true" || true,
-      publishedBy,        // Added publishedBy
-      publisherLinkedIn   // Added publisherLinkedIn
+      publishedBy,
+      publisherLinkedIn
     });
 
     const createdBlog = await blog.save();
@@ -200,5 +202,34 @@ router.post(
     res.status(201).json({ message: "Blog created successfully", blog: populatedBlog });
   })
 );
+
+// @route   DELETE /api/blogs/:id
+// @desc    Delete a blog post (Admin only)
+// @access  Private (Admin)
+router.delete(
+  "/:id",
+  protect,
+  admin,
+  asyncHandler(async (req, res) => {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    if (blog.images.original) {
+      fs.unlinkSync(path.join(uploadDir, path.basename(blog.images.original)));
+    }
+    if (blog.images.hero) {
+      fs.unlinkSync(path.join(uploadDir, path.basename(blog.images.hero)));
+    }
+    if (blog.images.thumbnail) {
+      fs.unlinkSync(path.join(uploadDir, path.basename(blog.images.thumbnail)));
+    }
+    await blog.remove();
+    res.status(200).json({ message: "Blog deleted successfully" });
+  })
+);
+
+// Serve static files from Uploads/blogs_image
+router.use("/uploads/blogs_image", express.static(uploadDir));
 
 module.exports = router;
