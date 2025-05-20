@@ -9,7 +9,7 @@ const Notification = require("../models/Notification");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: "./Uploads/",
+  destination: "./Uploads/forum/",
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   },
@@ -241,7 +241,7 @@ router.put("/forum/edit/:id", isAuthenticated, isAdmin, upload.single("image"), 
     post.contentType = contentType || post.contentType;
     post.username = username;
     if (req.file) {
-      post.image = `/Uploads/${req.file.filename}`;
+      post.image = `/Uploads/forum/${req.file.filename}`;
     }
     
     await post.save();
@@ -349,7 +349,7 @@ router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) 
       title,
       content: content || "",
       contentType: contentType || "html",
-      image: req.file ? `/Uploads/${req.file.filename}` : null,
+      image: req.file ? `/Uploads/forum/${req.file.filename}` : null,
       author: req.user._id,
       username: username,
       isDraft: false,
@@ -374,7 +374,7 @@ router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req,
       title: title || "Untitled Draft",
       content: content || "",
       contentType: contentType || "html",
-      image: req.file ? `/Uploads/${req.file.filename}` : null,
+      image: req.file ? `/Uploads/forum/${req.file.filename}` : null,
       author: req.user._id,
       isDraft: true,
     });
@@ -402,7 +402,7 @@ router.post(
       const comment = {
         content: content || "",
         author: author || req.user.firstName || "Anonymous",
-        image: req.file ? `/Uploads/${req.file.filename}` : null,
+        image: req.file ? `/Uploads/forum/${req.file.filename}` : null,
         parentId: parentId || null,
         createdAt: new Date(),
       };
