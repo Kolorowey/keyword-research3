@@ -330,7 +330,6 @@ router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) 
   try {
     const { title, content, contentType, username } = req.body;
     if (!req.user || !req.user._id) {
-      console.warn("User authentication failed:", req.user);
       return res.status(401).json({ error: "User not authenticated or missing ID" });
     }
     if (!title) {
@@ -358,6 +357,12 @@ router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) 
     res.status(201).json(newPost);
   } catch (error) {
     console.error("Error in POST /posts:", error);
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({ error: `Upload error: ${error.message}` });
+    }
+    if (error.message.includes("Only images and videos")) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: "Server error" });
   }
 });
