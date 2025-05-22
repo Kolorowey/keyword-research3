@@ -21,6 +21,8 @@ const PostSchema = new mongoose.Schema({
       parentId: { type: mongoose.Schema.Types.ObjectId, required: false },
       likes: { type: Number, default: 0 },
       dislikes: { type: Number, default: 0 },
+      likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+      dislikedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
     },
   ],
   isDraft: { type: Boolean, default: false },

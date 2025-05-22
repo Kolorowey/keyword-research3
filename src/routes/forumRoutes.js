@@ -116,7 +116,6 @@ router.put("/notifications/mark-read", isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 // Get all posts with sorting and filtering (public, checked posts)
 router.get("/posts", async (req, res) => {
   try {
@@ -137,13 +136,64 @@ router.get("/posts", async (req, res) => {
       sortOption.createdAt = -1;
     }
 
-    const posts = await Post.find(query).sort(sortOption);
-    res.json(posts);
+    const posts = await Post.find(query).sort(sortOption).lean();
+
+    // Manually fetch author data for each post
+    const postsWithAuthor = await Promise.all(
+      posts.map(async (post) => {
+        let author = { username: post.username || "Unknown User", profileImage: null };
+        try {
+          const user = await User.findById(post.author).select("username profileImage").lean();
+          if (user) {
+            author = {
+              username: user.username || post.username || "Unknown User",
+              profileImage: user.profileImage || null,
+            };
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch user for author ID ${post.author}:`, error.message);
+        }
+        return { ...post, author };
+      })
+    );
+
+    res.json(postsWithAuthor);
   } catch (error) {
-    console.error("Error in GET /posts:", error);
+    console.error("Error in GET /posts:", error.message);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// Get single post by ID
+router.get("/posts/:id", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).lean();
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Manually fetch author data
+    let author = { username: post.username || "Unknown User", profileImage: null };
+    try {
+      const user = await User.findById(post.author).select("username profileImage").lean();
+      if (user) {
+        author = {
+          username: user.username || post.username || "Unknown User",
+          profileImage: user.profileImage || null,
+        };
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch user for author ID ${post.author}:`, error.message);
+    }
+
+    res.json({ ...post, author });
+  } catch (error) {
+    console.error(`Error in GET /posts/:id for ID ${req.params.id}:`, error.message);
+    res.status(404).json({ error: "Post not found" });
+  }
+});
+
+
 
 // Get all unchecked posts (admin only)
 router.get("/admin/posts", isAuthenticated, isAdmin, async (req, res) => {
@@ -312,18 +362,6 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
   }
 });
 
-// Get single post by ID
-router.get("/posts/:id", async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post || post.isDraft) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-    res.json(post);
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
 // Create a new post
 router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) => {
@@ -422,12 +460,11 @@ router.post(
   }
 );
 
-// Like a comment
 router.post("/posts/:id/comments/:commentId/like", isAuthenticated, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post || post.isDraft) {
-      return res.status(404).json({ error: "Post not found" });
+      return res.status(404).json({ error: "Post not found or is a draft" });
     }
 
     const comment = post.comments.id(req.params.commentId);
@@ -435,12 +472,42 @@ router.post("/posts/:id/comments/:commentId/like", isAuthenticated, async (req, 
       return res.status(404).json({ error: "Comment not found" });
     }
 
+    const userId = req.user._id;
+    // Initialize likedBy if undefined
+    comment.likedBy = comment.likedBy || [];
+    if (comment.likedBy.includes(userId)) {
+      return res.status(400).json({ error: "You have already liked this comment" });
+    }
+
+    // Initialize dislikedBy if undefined
+    comment.dislikedBy = comment.dislikedBy || [];
+    // Remove user from dislikedBy if present
+    if (comment.dislikedBy.includes(userId)) {
+      comment.dislikedBy = comment.dislikedBy.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+      comment.dislikes = Math.max(0, (comment.dislikes || 0) - 1);
+    }
+
+    // Add user to likedBy
+    comment.likedBy.push(userId);
     comment.likes = (comment.likes || 0) + 1;
+
     await post.save();
 
-    res.json({ message: "Comment liked" });
+    res.json({
+      message: "Comment liked",
+      comment: {
+        _id: comment._id,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        likedBy: comment.likedBy,
+        dislikedBy: comment.dislikedBy,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error("Error liking comment:", error);
+    res.status(500).json({ error: "Server error: Unable to like comment" });
   }
 });
 
@@ -449,7 +516,7 @@ router.post("/posts/:id/comments/:commentId/unlike", isAuthenticated, async (req
   try {
     const post = await Post.findById(req.params.id);
     if (!post || post.isDraft) {
-      return res.status(404).json({ error: "Post not found" });
+      return res.status(404).json({ error: "Post not found or is a draft" });
     }
 
     const comment = post.comments.id(req.params.commentId);
@@ -457,65 +524,131 @@ router.post("/posts/:id/comments/:commentId/unlike", isAuthenticated, async (req
       return res.status(404).json({ error: "Comment not found" });
     }
 
+    const userId = req.user._id;
+    // Initialize likedBy if undefined
+    comment.likedBy = comment.likedBy || [];
+    if (!comment.likedBy.includes(userId)) {
+      return res.status(400).json({ error: "You have not liked this comment" });
+    }
+
+    // Remove user from likedBy
+    comment.likedBy = comment.likedBy.filter(
+      (id) => id.toString() !== userId.toString()
+    );
     comment.likes = Math.max(0, (comment.likes || 0) - 1);
+
     await post.save();
 
-    res.json({ message: "Comment unliked" });
+    res.json({
+      message: "Comment unliked",
+      comment: {
+        _id: comment._id,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        likedBy: comment.likedBy,
+        dislikedBy: comment.dislikedBy || [],
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error("Error unliking comment:", error);
+    res.status(500).json({ error: "Server error: Unable to unlike comment" });
   }
 });
 
 // Dislike a comment
-router.post(
-  "/posts/:id/comments/:commentId/dislike",
-  isAuthenticated,
-  async (req, res) => {
-    try {
-      const post = await Post.findById(req.params.id);
-      if (!post || post.isDraft) {
-        return res.status(404).json({ error: "Post not found" });
-      }
-
-      const comment = post.comments.id(req.params.commentId);
-      if (!comment) {
-        return res.status(404).json({ error: "Comment not found" });
-      }
-
-      comment.dislikes = (comment.dislikes || 0) + 1;
-      await post.save();
-
-      res.json({ message: "Comment disliked" });
-    } catch (error) {
-      res.status(500).json({ error: "Server error" });
+router.post("/posts/:id/comments/:commentId/dislike", isAuthenticated, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found or is a draft" });
     }
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    const userId = req.user._id;
+    // Initialize dislikedBy if undefined
+    comment.dislikedBy = comment.dislikedBy || [];
+    if (comment.dislikedBy.includes(userId)) {
+      return res.status(400).json({ error: "You have already disliked this comment" });
+    }
+
+    // Initialize likedBy if undefined
+    comment.likedBy = comment.likedBy || [];
+    // Remove user from likedBy if present
+    if (comment.likedBy.includes(userId)) {
+      comment.likedBy = comment.likedBy.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+      comment.likes = Math.max(0, (comment.likes || 0) - 1);
+    }
+
+    // Add user to dislikedBy
+    comment.dislikedBy.push(userId);
+    comment.dislikes = (comment.dislikes || 0) + 1;
+
+    await post.save();
+
+    res.json({
+      message: "Comment disliked",
+      comment: {
+        _id: comment._id,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        likedBy: comment.likedBy,
+        dislikedBy: comment.dislikedBy,
+      },
+    });
+  } catch (error) {
+    console.error("Error disliking comment:", error);
+    res.status(500).json({ error: "Server error: Unable to dislike comment" });
   }
-);
+});
 
 // Undislike a comment
-router.post(
-  "/posts/:id/comments/:commentId/undislike",
-  isAuthenticated,
-  async (req, res) => {
-    try {
-      const post = await Post.findById(req.params.id);
-      if (!post || post.isDraft) {
-        return res.status(404).json({ error: "Post not found" });
-      }
-
-      const comment = post.comments.id(req.params.commentId);
-      if (!comment) {
-        return res.status(404).json({ error: "Comment not found" });
-      }
-
-      comment.dislikes = Math.max(0, (comment.dislikes || 0) - 1);
-      await post.save();
-
-      res.json({ message: "Comment undisliked" });
-    } catch (error) {
-      res.status(500).json({ error: "Server error" });
+router.post("/posts/:id/comments/:commentId/undislike", isAuthenticated, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found or is a draft" });
     }
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    const userId = req.user._id;
+    // Initialize dislikedBy if undefined
+    comment.dislikedBy = comment.dislikedBy || [];
+    if (!comment.dislikedBy.includes(userId)) {
+      return res.status(400).json({ error: "You have not disliked this comment" });
+    }
+
+    // Remove user from dislikedBy
+    comment.dislikedBy = comment.dislikedBy.filter(
+      (id) => id.toString() !== userId.toString()
+    );
+    comment.dislikes = Math.max(0, (comment.dislikes || 0) - 1);
+
+    await post.save();
+
+    res.json({
+      message: "Comment undisliked",
+      comment: {
+        _id: comment._id,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        likedBy: comment.likedBy || [],
+        dislikedBy: comment.dislikedBy,
+      },
+    });
+  } catch (error) {
+    console.error("Error undisliking comment:", error);
+    res.status(500).json({ error: "Server error: Unable to undislike comment" });
   }
-);
+});
 
 module.exports = router;
