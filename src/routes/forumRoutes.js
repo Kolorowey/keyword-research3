@@ -38,8 +38,7 @@ const upload = multer({
 
 const isAuthenticated = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    console.log("Authorization Header:", authHeader);
+    const authHeader = req.headers.authorization;    
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "No token provided or invalid format" });
     }
@@ -51,8 +50,8 @@ const isAuthenticated = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded JWT:", decoded);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);    
+      
     } catch (error) {
       console.error("JWT Verification Error:", error.message);
       return res.status(401).json({ error: `Invalid token: ${error.message}` });
@@ -66,12 +65,7 @@ const isAuthenticated = async (req, res, next) => {
 
     // Derive username if not present
     user.username = user.username || `${user.firstName} ${user.lastName}`.trim();
-
-    console.log("Authenticated User:", {
-      _id: user._id,
-      username: user.username,
-      isAdmin: user.isAdmin,
-    });
+    
     req.user = user;
     next();
   } catch (error) {

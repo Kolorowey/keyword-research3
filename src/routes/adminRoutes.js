@@ -5,26 +5,12 @@ const User = require("../models/User");
 const Blog = require("../models/Blog");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
-const winston = require("winston");
 const multer = require("multer");
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
 const router = express.Router();
-
-// Configure Winston logger
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: "admin-actions.log" }),
-    new winston.transports.Console(),
-  ],
-});
 
 // Rate limiter: max 100 requests per 15 minutes per IP
 const adminRateLimiter = rateLimit({
@@ -36,20 +22,17 @@ const adminRateLimiter = rateLimit({
 // Middleware to enhance security headers
 router.use(helmet());
 
-// Enhanced admin middleware with explicit role check and logging
+// Enhanced admin middleware with explicit role check
 const enhancedAdmin = asyncHandler(async (req, res, next) => {
   if (!req.user) {
-    logger.warn(`Unauthorized access attempt to admin route: ${req.originalUrl}`);
     return res.status(401).json({ message: "Unauthorized: No user authenticated" });
   }
 
   const user = await User.findById(req.user._id);
   if (!user || !user.isAdmin) {
-    logger.warn(`Non-admin access attempt by user ${req.user._id} to ${req.originalUrl}`);
     return res.status(403).json({ message: "Forbidden: Admin access required" });
   }
 
-  logger.info(`Admin ${user.email} accessed ${req.originalUrl}`);
   next();
 });
 
@@ -102,7 +85,6 @@ router.get(
 
       res.json({ userCount, users });
     } catch (error) {
-      logger.error(`Error fetching users by admin ${req.user.email}: ${error.message}`);
       res.status(500).json({ message: "Internal server error" });
     }
   })
@@ -122,15 +104,12 @@ router.get(
       const draftCount = await Blog.countDocuments({ published: false });
       const totalCount = publishedCount + draftCount;
 
-      logger.info(`Blog counts retrieved by admin ${req.user.email}: Published=${publishedCount}, Draft=${draftCount}, Total=${totalCount}`);
-
       res.status(200).json({
         publishedCount,
         draftCount,
         totalCount,
       });
     } catch (error) {
-      logger.error(`Error fetching blog counts by admin ${req.user.email}: ${error.message}`);
       res.status(500).json({ message: "Internal server error" });
     }
   })
@@ -166,7 +145,6 @@ router.put(
 
       const blog = await Blog.findOne({ slug: req.params.slug });
       if (!blog) {
-        logger.warn(`Blog not found for slug ${req.params.slug} by admin ${req.user.email}`);
         return res.status(404).json({ message: "Blog not found" });
       }
 
@@ -174,7 +152,6 @@ router.put(
       if (newSlug && newSlug !== req.params.slug) {
         const slugExists = await Blog.findOne({ slug: newSlug });
         if (slugExists) {
-          logger.warn(`Slug ${newSlug} already exists, attempted by admin ${req.user.email}`);
           return res.status(400).json({ message: "Slug already exists" });
         }
       }
@@ -193,7 +170,6 @@ router.put(
             .resize({ width: 400, height: 400, fit: "cover" })
             .toFile(path.join(uploadDir, `thumb-${req.file.filename}`));
         } catch (err) {
-          logger.error(`Image processing failed for blog ${req.params.slug} by admin ${req.user.email}: ${err.message}`);
           return res.status(500).json({ message: "Image processing failed" });
         }
 
@@ -201,7 +177,6 @@ router.put(
       } else if (imageUrl) {
         const isValidUrl = /^(https?:\/\/)/i.test(imageUrl);
         if (!isValidUrl) {
-          logger.warn(`Invalid image URL provided by admin ${req.user.email}: ${imageUrl}`);
           return res.status(400).json({ message: "Invalid image URL" });
         }
         imageData = { original: imageUrl, hero: imageUrl, thumbnail: imageUrl };
@@ -226,10 +201,8 @@ router.put(
       const updatedBlog = await blog.save();
       const populatedBlog = await Blog.findById(updatedBlog._id).populate("author", "name");
 
-      logger.info(`Blog ${req.params.slug} updated successfully by admin ${req.user.email}`);
       res.status(200).json({ message: "Blog updated successfully", blog: populatedBlog });
     } catch (error) {
-      logger.error(`Error updating blog ${req.params.slug} by admin ${req.user.email}: ${error.message}`);
       res.status(500).json({ message: "Internal server error" });
     }
   })
@@ -247,14 +220,11 @@ router.post(
   asyncHandler(async (req, res) => {
     try {
       if (!req.file) {
-        logger.warn(`No file uploaded for ads.txt by admin ${req.user.email}`);
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      logger.info(`ads.txt uploaded successfully by admin ${req.user.email}`);
       res.status(200).json({ message: "ads.txt uploaded successfully" });
     } catch (error) {
-      logger.error(`Error uploading ads.txt by admin ${req.user.email}: ${error.message}`);
       res.status(500).json({ message: "Error uploading ads.txt", error: error.message });
     }
   })
