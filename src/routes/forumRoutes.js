@@ -6,6 +6,13 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
+const DOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
+const mongoose = require("mongoose");
+
+// Configure DOMPurify
+const window = new JSDOM("").window;
+const purify = DOMPurify(window);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -31,23 +38,45 @@ const upload = multer({
 
 const isAuthenticated = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+    const authHeader = req.headers.authorization;
+    console.log("Authorization Header:", authHeader);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided or invalid format" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Token missing after Bearer" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded JWT:", decoded);
+    } catch (error) {
+      console.error("JWT Verification Error:", error.message);
+      return res.status(401).json({ error: `Invalid token: ${error.message}` });
+    }
+
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
       console.error("User not found for ID:", decoded.id);
       return res.status(401).json({ error: "User not found" });
     }
 
+    // Derive username if not present
+    user.username = user.username || `${user.firstName} ${user.lastName}`.trim();
+
+    console.log("Authenticated User:", {
+      _id: user._id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+    });
     req.user = user;
     next();
   } catch (error) {
     console.error("Authentication error:", error.message);
-    res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Authentication failed" });
   }
 };
 
@@ -62,6 +91,23 @@ const isAdmin = async (req, res, next) => {
     console.error("Error in isAdmin middleware:", error.message);
     res.status(500).json({ error: "Server error", details: error.message });
   }
+};
+
+// Utility function to parse author (JSON string or plain string)
+const parseAuthor = (author) => {
+  if (typeof author === "string") {
+    try {
+      if (author.startsWith("{")) {
+        const parsed = JSON.parse(author);
+        return (parsed.username || "Anonymous").toLowerCase();
+      }
+      return author.toLowerCase();
+    } catch (e) {
+      console.warn(`Failed to parse author: ${author}`);
+      return "Anonymous";
+    }
+  }
+  return (author || "Anonymous").toLowerCase();
 };
 
 // Get notifications for the authenticated user
@@ -109,13 +155,14 @@ router.put("/notifications/mark-read", isAuthenticated, async (req, res) => {
       { userId: req.user._id, isRead: false },
       { $set: { isRead: true } }
     );
-   
+
     res.status(200).json({ message: "Notifications marked as read", modifiedCount: result.modifiedCount });
   } catch (error) {
     console.error("Error in PUT /notifications/mark-read:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 // Get all posts with sorting and filtering (public, checked posts)
 router.get("/posts", async (req, res) => {
   try {
@@ -143,12 +190,18 @@ router.get("/posts", async (req, res) => {
       posts.map(async (post) => {
         let author = { username: post.username || "Unknown User", profileImage: null };
         try {
-          const user = await User.findById(post.author).select("username profileImage").lean();
-          if (user) {
-            author = {
-              username: user.username || post.username || "Unknown User",
-              profileImage: user.profileImage || null,
-            };
+          // Check if author is a valid ObjectId
+          if (mongoose.isValidObjectId(post.author)) {
+            const user = await User.findById(post.author).select("username firstName lastName profileImage").lean();
+            if (user) {
+              const username = user.username || `${user.firstName} ${user.lastName}`.trim();
+              author = {
+                username: username || post.username || "Unknown User",
+                profileImage: user.profileImage || null,
+              };
+            }
+          } else {
+            console.warn(`Invalid author ID ${post.author} for post ${post._id}`);
           }
         } catch (error) {
           console.warn(`Failed to fetch user for author ID ${post.author}:`, error.message);
@@ -175,12 +228,17 @@ router.get("/posts/:id", async (req, res) => {
     // Manually fetch author data
     let author = { username: post.username || "Unknown User", profileImage: null };
     try {
-      const user = await User.findById(post.author).select("username profileImage").lean();
-      if (user) {
-        author = {
-          username: user.username || post.username || "Unknown User",
-          profileImage: user.profileImage || null,
-        };
+      if (mongoose.isValidObjectId(post.author)) {
+        const user = await User.findById(post.author).select("username firstName lastName profileImage").lean();
+        if (user) {
+          const username = user.username || `${user.firstName} ${user.lastName}`.trim();
+          author = {
+            username: username || post.username || "Unknown User",
+            profileImage: user.profileImage || null,
+          };
+        }
+      } else {
+        console.warn(`Invalid author ID ${post.author} for post ${post._id}`);
       }
     } catch (error) {
       console.warn(`Failed to fetch user for author ID ${post.author}:`, error.message);
@@ -192,8 +250,6 @@ router.get("/posts/:id", async (req, res) => {
     res.status(404).json({ error: "Post not found" });
   }
 });
-
-
 
 // Get all unchecked posts (admin only)
 router.get("/admin/posts", isAuthenticated, isAdmin, async (req, res) => {
@@ -245,7 +301,7 @@ router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
     }
 
     await post.deleteOne();
-    
+
     // Create notification for the post author
     const user = await User.findById(post.author);
     if (user) {
@@ -269,7 +325,7 @@ router.put("/forum/edit/:id", isAuthenticated, isAdmin, upload.single("image"), 
   try {
     const { title, content, contentType, username } = req.body;
     const post = await Post.findById(req.params.id);
-    
+
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
@@ -293,7 +349,7 @@ router.put("/forum/edit/:id", isAuthenticated, isAdmin, upload.single("image"), 
     if (req.file) {
       post.image = `/Uploads/forum/${req.file.filename}`;
     }
-    
+
     await post.save();
 
     // Create notification for the post author
@@ -327,7 +383,7 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    const userId = req.user.id;
+    const userId = req.user._id;
     const existingReaction = post.userReactions.find(
       (r) => r.userId.toString() === userId
     );
@@ -361,7 +417,6 @@ router.post("/posts/:id/react", isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // Create a new post
 router.post("/posts", isAuthenticated, upload.single("image"), async (req, res) => {
@@ -419,6 +474,7 @@ router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req,
       contentType: contentType || "html",
       image: req.file ? `/Uploads/forum/${req.file.filename}` : null,
       author: req.user._id,
+      username: req.user.username || `${req.user.firstName} ${req.lastName}`.trim(),
       isDraft: true,
     });
     await newPost.save();
@@ -430,36 +486,53 @@ router.post("/posts/draft", isAuthenticated, upload.single("image"), async (req,
 });
 
 // Add a comment
-router.post(
-  "/posts/:id/comments",
-  isAuthenticated,
-  upload.single("image"),
-  async (req, res) => {
-    try {
-      const { content, author, parentId } = req.body;
-      const post = await Post.findById(req.params.id);
-      if (!post || post.isDraft) {
-        return res.status(404).json({ error: "Post not found" });
-      }
-
-      const comment = {
-        content: content || "",
-        author: author || req.user.firstName || "Anonymous",
-        image: req.file ? `/Uploads/forum/${req.file.filename}` : null,
-        parentId: parentId || null,
-        createdAt: new Date(),
-      };
-
-      post.comments.push(comment);
-      await post.save();
-
-      res.status(201).json(comment);
-    } catch (error) {
-      res.status(500).json({ error: "Server error" });
+router.post("/posts/:id/comments", isAuthenticated, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found or is a draft" });
     }
-  }
-);
 
+    const { content, image, parentId } = req.body;
+    const user = req.user;
+
+    const comment = {
+      content: content || "",
+      author: user.username, // Store username as string
+      image: image || null,
+      createdAt: new Date(),
+      parentId: parentId || null,
+      likes: 0,
+      dislikes: 0,
+      likedBy: [],
+      dislikedBy: [],
+    };
+
+    post.comments.push(comment);
+    await post.save();
+
+    res.status(201).json({
+      message: "Comment added",
+      comment: {
+        _id: comment._id,
+        content: comment.content,
+        author: user.username,
+        image: comment.image,
+        createdAt: comment.createdAt,
+        parentId: comment.parentId,
+        likes: comment.likes,
+        dislikes: comment.dislikes,
+        likedBy: comment.likedBy,
+        dislikedBy: comment.dislikedBy,
+      },
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ error: "Server error: Unable to add comment" });
+  }
+});
+
+// Like a comment
 router.post("/posts/:id/comments/:commentId/like", isAuthenticated, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -648,6 +721,185 @@ router.post("/posts/:id/comments/:commentId/undislike", isAuthenticated, async (
   } catch (error) {
     console.error("Error undisliking comment:", error);
     res.status(500).json({ error: "Server error: Unable to undislike comment" });
+  }
+});
+
+// Get user's posts, commented posts, and liked posts
+router.get("/user-activity", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const username = req.user.username;
+
+    // Fetch posts authored by the user
+    const userPosts = await Post.find({ author: userId, isDraft: false })
+      .select("title content comments userReactions author")
+      .lean();
+
+    // Fetch posts where the user commented
+    const commentedPosts = await Post.find({
+      "comments.author": username,
+      isDraft: false,
+    })
+      .select("title content comments userReactions author")
+      .lean();
+
+    // Fetch posts the user liked
+    const likedPosts = await Post.find({
+      userReactions: { $elemMatch: { userId, reactionType: "like" } },
+      isDraft: false,
+    })
+      .select("title content comments userReactions author")
+      .lean();
+
+    // Combine and deduplicate posts
+    const allPosts = [...userPosts, ...commentedPosts, ...likedPosts];
+    const uniquePosts = Array.from(
+      new Map(allPosts.map((post) => [post._id.toString(), post])).values()
+    );
+
+    // Format response to match frontend expectations
+    const formattedPosts = uniquePosts.map((post) => {
+      // Count total comments
+      const commentCount = post.comments.length;
+
+      // Get user's comments
+      const userComments = post.comments
+        .filter((comment) => comment.author === username)
+        .map((comment) => ({
+          id: comment._id,
+          text: comment.content,
+        }));
+
+      // Check if user liked the post
+      const isLikedByUser = post.userReactions.some(
+        (reaction) =>
+          reaction.userId.toString() === userId.toString() &&
+          reaction.reactionType === "like"
+      );
+
+      // Check if post is authored by user, handle missing author
+      const isUserPost = post.author
+        ? post.author.toString() === userId.toString()
+        : false;
+
+      if (!post.author) {
+        console.warn(`Post ${post._id} has missing author field`);
+      }
+
+      // Count likes from userReactions
+      const likes = post.userReactions.filter(
+        (reaction) => reaction.reactionType === "like"
+      ).length;
+
+      return {
+        id: post._id,
+        title: post.title,
+        content: post.content,
+        likes,
+        comments: commentCount,
+        shares: 0, // Not implemented in schema, set to 0
+        isUserPost,
+        isLikedByUser,
+        userComments,
+      };
+    });
+
+    res.json(formattedPosts);
+  } catch (error) {
+    console.error("Error fetching user activity:", error);
+    res.status(500).json({ error: "Server error: Unable to fetch user activity" });
+  }
+});
+
+// DELETE /api/forum/posts/:postId/comments/:commentId
+router.delete("/posts/:postId/comments/:commentId", isAuthenticated, async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const user = req.user;
+
+    // Find the post
+    const post = await Post.findById(postId);
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found or is a draft" });
+    }
+
+    // Find the comment
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // Log for debugging
+    console.log("User:", { _id: user._id, username: user.username, isAdmin: user.isAdmin });
+    console.log("Comment author raw:", comment.author);
+    console.log("Comment author parsed:", parseAuthor(comment.author));
+
+    // Check ownership for non-admins (case-insensitive)
+    const commentAuthor = parseAuthor(comment.author);
+    if (!user.isAdmin && commentAuthor !== user.username.toLowerCase()) {
+      return res.status(403).json({ error: "You can only delete your own comments" });
+    }
+
+    // Remove the comment and its replies
+    post.comments = post.comments.filter(
+      (c) => c._id.toString() !== commentId && c.parentId?.toString() !== commentId
+    );
+    await post.save();
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ error: "Server error: Unable to delete comment" });
+  }
+});
+
+// PUT /api/forum/posts/:postId/comments/:commentId
+router.put("/posts/:postId/comments/:commentId", isAuthenticated, async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { content } = req.body;
+    const user = req.user;
+
+    // Validate input
+    if (!content || typeof content !== "string") {
+      return res.status(400).json({ error: "Content is required and must be a string" });
+    }
+
+    // Find the post
+    const post = await Post.findById(postId);
+    if (!post || post.isDraft) {
+      return res.status(404).json({ error: "Post not found or is a draft" });
+    }
+
+    // Find the comment
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // Log for debugging
+    console.log("User:", { _id: user._id, username: user.username, isAdmin: user.isAdmin });
+    console.log("Comment author raw:", comment.author);
+    console.log("Comment author parsed:", parseAuthor(comment.author));
+
+    // Check ownership for non-admins (case-insensitive)
+    const commentAuthor = parseAuthor(comment.author);
+    if (!user.isAdmin && commentAuthor !== user.username.toLowerCase()) {
+      return res.status(403).json({ error: "You can only edit your own comments" });
+    }
+
+    // Sanitize content to prevent XSS
+    comment.content = purify.sanitize(content);
+    comment.updatedAt = new Date();
+    await post.save();
+
+    res.status(200).json({
+      message: "Comment updated successfully",
+      content: comment.content,
+    });
+  } catch (error) {
+    console.error("Error editing comment:", error);
+    res.status(500).json({ error: "Server error: Unable to edit comment" });
   }
 });
 
