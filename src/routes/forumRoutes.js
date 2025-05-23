@@ -718,7 +718,6 @@ router.post("/posts/:id/comments/:commentId/undislike", isAuthenticated, async (
   }
 });
 
-// Get user's posts, commented posts, and liked posts
 router.get("/user-activity", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user._id;
@@ -765,11 +764,13 @@ router.get("/user-activity", isAuthenticated, async (req, res) => {
         }));
 
       // Check if user liked the post
-      const isLikedByUser = post.userReactions.some(
-        (reaction) =>
-          reaction.userId.toString() === userId.toString() &&
-          reaction.reactionType === "like"
-      );
+      const isLikedByUser = Array.isArray(post.userReactions)
+        ? post.userReactions.some(
+            (reaction) =>
+              reaction.userId.toString() === userId.toString() &&
+              reaction.reactionType === "like"
+          )
+        : false;
 
       // Check if post is authored by user, handle missing author
       const isUserPost = post.author
@@ -781,9 +782,11 @@ router.get("/user-activity", isAuthenticated, async (req, res) => {
       }
 
       // Count likes from userReactions
-      const likes = post.userReactions.filter(
-        (reaction) => reaction.reactionType === "like"
-      ).length;
+      const likes = Array.isArray(post.userReactions)
+        ? post.userReactions.filter(
+            (reaction) => reaction.reactionType === "like"
+          ).length
+        : 0;
 
       return {
         id: post._id,
@@ -804,6 +807,7 @@ router.get("/user-activity", isAuthenticated, async (req, res) => {
     res.status(500).json({ error: "Server error: Unable to fetch user activity" });
   }
 });
+
 
 // DELETE /api/forum/posts/:postId/comments/:commentId
 router.delete("/posts/:postId/comments/:commentId", isAuthenticated, async (req, res) => {
